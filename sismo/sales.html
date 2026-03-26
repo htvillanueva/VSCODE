@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISMO - Sales Analysis</title>
+    <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <link rel="stylesheet" href="assets/css/sales.css">
+    <script src="assets/js/components.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* =========================================
+           ACTIVE BUTTON STYLES (Blue Highlight)
+           ========================================= */
+        .filter-btn {
+            border-radius: 50px !important; /* Round pill shape */
+            margin: 0 2px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        /* The Active Blue State */
+        .filter-btn.active {
+            background-color: #0d6efd !important;
+            color: white !important;
+            border-color: #0d6efd !important;
+            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+            font-weight: bold;
+        }
+
+        /* Hover effect for non-active buttons */
+        .filter-btn:not(.active):hover {
+            background-color: #f8f9fa;
+            color: #0d6efd;
+            border-color: #dee2e6;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Auth Guard ───────────────────────────── -->
+    <div id="sismo-guard" style="position:fixed;inset:0;background:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;"><div class="spinner-border text-secondary" role="status"></div></div>
+    <script type="module">
+        import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        const _cfg = { apiKey:"AIzaSyAlTpK3kiqIGXsYZHgmES6MBaepo_5_i6Q", authDomain:"sismo-5323c.firebaseapp.com", projectId:"sismo-5323c", storageBucket:"sismo-5323c.firebasestorage.app", messagingSenderId:"179304155395", appId:"1:179304155395:web:fa017fa581335f4f140136" };
+        const _app = getApps().length ? getApps()[0] : initializeApp(_cfg);
+        onAuthStateChanged(getAuth(_app), user => {
+            if (!user) { window.location.replace('index.html'); return; }
+            document.getElementById('sismo-guard').remove();
+        });
+        window._sismoSignOut = async () => { await signOut(getAuth(_app)); window.location.replace('index.html'); };
+    </script>
+
+    <div id="page-header"></div>
+    <script>
+        renderPageHeader({
+            badge: 'Sales Report',
+            rightHtml: backButtonHtml({ label: 'Back to Home', mobileLabel: 'Home', href: 'home.html' })
+        });
+    </script>
+
+    <!-- Filter bar: horizontally scrollable on mobile -->
+    <div class="filter-bar py-2 px-3" style="overflow-x:auto;white-space:nowrap;text-align:center;">
+        <div class="btn-group shadow-sm" role="group">
+            <button type="button" class="btn btn-white border filter-btn" onclick="setFilter('today', this)">Today</button>
+            <button type="button" class="btn btn-white border filter-btn" onclick="setFilter('week', this)">This Week</button>
+            <button type="button" class="btn btn-white border filter-btn" onclick="setFilter('month', this)">This Month</button>
+            <button type="button" class="btn btn-white border filter-btn" onclick="setFilter('year', this)">This Year</button>
+            <button type="button" class="btn btn-white border filter-btn active" onclick="setFilter('all', this)">All Time</button>
+        </div>
+    </div>
+
+    <div class="container py-3">
+        <div class="row g-3 mb-4">
+            <div class="col-md">
+                <div class="card border-0 shadow-sm p-3 border-start border-4 border-success h-100">
+                    <div>
+                        <p class="text-muted mb-0 small">TOTAL REVENUE</p>
+                        <h3 class="fw-bold m-0" id="totalSalesDisplay">₱0.00</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md">
+                <div class="card border-0 shadow-sm p-3 border-start border-4 border-danger h-100">
+                    <div>
+                        <p class="text-muted mb-0 small">SPOILAGE (UNSELLABLE)</p>
+                        <h3 class="fw-bold m-0 text-danger" id="spoilageDisplay">-₱0.00</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md">
+                <div class="card border-0 shadow-sm p-3 border-start border-4 border-success h-100" id="profitCard">
+                    <div>
+                        <p class="text-muted mb-0 small">NET PROFIT</p>
+                        <h3 class="fw-bold m-0" id="totalProfitDisplay">₱0.00</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md">
+                <div class="card border-0 shadow-sm p-3 border-start border-4 border-primary h-100">
+                    <div>
+                        <p class="text-muted mb-0 small">TRANSACTIONS</p>
+                        <h3 class="fw-bold m-0" id="totalCountDisplay">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="m-0 fw-bold"><i class="bi bi-bar-chart-line"></i> Sales Performance</h6>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="salesChart" height="100"></canvas>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 fw-bold"><i class="bi bi-clock-history"></i> Transaction Log</h6>
+                        
+                        <div class="input-group input-group-sm w-auto">
+                            <input type="date" id="dateSearchInput" class="form-control" min="1000-01-01" max="9999-12-31">
+                            <button class="btn btn-primary" onclick="searchByDate()">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="resetDateSearch()" title="Clear Search">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0">
+                        <div class="table-scroll-container" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                                    <tr>
+                                        <th class="ps-4">Date/Time</th>
+                                        <th>Items Sold</th>
+                                        <th>Total</th>
+                                        <th>Cash Paid</th>
+                                        <th>Change</th>
+                                        <th class="text-end pe-4">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentTxTable">
+                                    <tr><td colspan="6" class="text-center py-4">Loading data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 fw-bold text-primary"><i class="bi bi-lightbulb-fill"></i> Smart Suggestions</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" id="suggestionList">
+                            <div class="p-3 text-center text-muted">Gathering data...</div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <small class="text-muted fst-italic">Target: >₱2,000 profit/month</small>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="m-0 fw-bold"><i class="bi bi-trophy"></i> Best Sellers</h6>
+                    </div>
+                    <div class="card-body" id="bestSellersList">
+                        <p class="text-center text-muted">No data yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, deleteDoc, doc, getDoc, getDocs, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ==========================================
+        // 🚨 YOUR KEYS HERE 🚨
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAlTpK3kiqIGXsYZHgmES6MBaepo_5_i6Q",
+            authDomain: "sismo-5323c.firebaseapp.com",
+            projectId: "sismo-5323c",
+            storageBucket: "sismo-5323c.firebasestorage.app",
+            messagingSenderId: "179304155395",
+            appId: "1:179304155395:web:fa017fa581335f4f140136"
+        };
+
+        const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // GLOBALS
+        let allSalesData = [];
+        let allProducts = []; 
+        let productMap = {}; 
+        let currentFilter = 'all';
+        let salesChart;
+
+        // 1. SETUP CHART
+        const ctx = document.getElementById('salesChart');
+        salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Revenue (₱)',
+                    data: [],
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        // 2a. LISTEN TO PRODUCTS
+        onSnapshot(collection(db, "products"), (snapshot) => {
+            allProducts = []; 
+            snapshot.forEach(doc => {
+                const p = doc.data();
+                allProducts.push(p); 
+                productMap[p.name] = { 
+                    sell: p.price || 0,
+                    cost: p.supplyPrice || 0 
+                }; 
+            });
+            applyFilter();
+        });
+
+        // 2b. LISTEN TO SALES
+        const q = query(collection(db, "sales"), orderBy("date", "desc"));
+        onSnapshot(q, (snapshot) => {
+            allSalesData = [];
+            snapshot.forEach(docSnapshot => {
+                let sale = docSnapshot.data();
+                sale.id = docSnapshot.id;
+                // Ensure date is a JS Date object
+                if(sale.date && sale.date.toDate) sale.jsDate = sale.date.toDate();
+                else sale.jsDate = new Date();
+                allSalesData.push(sale);
+            });
+            applyFilter();
+        });
+
+        // 3. UPDATED FILTER LOGIC (Handling Buttons)
+        window.setFilter = function(filterType, btnElement) {
+            currentFilter = filterType;
+            document.getElementById('dateSearchInput').value = "";
+            
+            // 1. Remove active from all buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // 2. Add active to clicked button
+            // If passed via onclick(..., this)
+            if(btnElement) {
+                btnElement.classList.add('active');
+            } else {
+                // Fallback
+                event.target.classList.add('active');
+            }
+            
+            applyFilter();
+        }
+
+        window.searchByDate = function() {
+            const dateInput = document.getElementById('dateSearchInput').value;
+            if(!dateInput) return alert("Please select a date.");
+            currentFilter = 'specific_date';
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            applyFilter();
+        }
+
+        window.resetDateSearch = function() {
+            document.getElementById('dateSearchInput').value = "";
+            
+            // Manually trigger the "All Time" click behavior
+            // Find the all time button (it's the last one or explicitly find it)
+            const allBtn = document.querySelectorAll('.filter-btn')[4]; 
+            if(allBtn) setFilter('all', allBtn);
+            else setFilter('all');
+        }
+
+        function applyFilter() {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            const specificDateInput = document.getElementById('dateSearchInput').value;
+            let targetDate = null;
+            if(specificDateInput) {
+                targetDate = new Date(specificDateInput);
+                targetDate.setHours(0,0,0,0);
+            }
+
+            let filteredData = allSalesData.filter(sale => {
+                const saleDate = new Date(sale.jsDate);
+                saleDate.setHours(0,0,0,0);
+
+                if (currentFilter === 'today') {
+                    return saleDate.getTime() === today.getTime();
+                } else if (currentFilter === 'week') {
+                    const oneWeekAgo = new Date(today);
+                    oneWeekAgo.setDate(today.getDate() - 7);
+                    return saleDate >= oneWeekAgo;
+                } else if (currentFilter === 'month') {
+                    return saleDate.getMonth() === today.getMonth() && saleDate.getFullYear() === today.getFullYear();
+                } else if (currentFilter === 'year') {
+                    return saleDate.getFullYear() === today.getFullYear();
+                } else if (currentFilter === 'specific_date' && targetDate) {
+                    return saleDate.getTime() === targetDate.getTime();
+                }
+                return true; 
+            });
+
+            calculateMetrics(filteredData);
+        }
+
+        // 4. CALCULATE METRICS
+        function calculateMetrics(data) {
+            let totalSales = 0;
+            let totalCostOfGoods = 0;
+            let productCount = {};
+            let chartDataMap = {}; 
+
+            const tableBody = document.getElementById('recentTxTable');
+            tableBody.innerHTML = "";
+
+            // --- A. Process Sales Data ---
+            data.forEach(sale => {
+                totalSales += sale.total;
+                let items = Array.isArray(sale.items) ? sale.items : [sale.items];
+                let currentTxCounts = {}; 
+
+                items.forEach(itemString => {
+                    let cleanName = itemString.split(" (Exp:")[0]; 
+                    productCount[cleanName] = (productCount[cleanName] || 0) + 1;
+                    
+                    let itemInfo = productMap[cleanName];
+                    if (itemInfo) totalCostOfGoods += itemInfo.cost;
+
+                    currentTxCounts[itemString] = (currentTxCounts[itemString] || 0) + 1;
+                });
+
+                // Chart Aggregation
+                let dateLabel = sale.jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                if(currentFilter === 'today' || currentFilter === 'specific_date') {
+                    dateLabel = sale.jsDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+                }
+                
+                if (!chartDataMap[dateLabel]) {
+                    chartDataMap[dateLabel] = { total: 0, timestamp: sale.jsDate.getTime() };
+                }
+                chartDataMap[dateLabel].total += sale.total;
+
+                // Table Row
+                let formattedItems = [];
+                for (let [name, qty] of Object.entries(currentTxCounts)) {
+                    formattedItems.push(`<span class="fw-bold">${qty}x</span> ${name}`);
+                }
+                let itemsStr = formattedItems.join("<br>");
+
+                let timeStr = sale.jsDate.toLocaleString('en-US', { 
+                    month: 'short', day: 'numeric', year: 'numeric', 
+                    hour: 'numeric', minute: '2-digit', hour12: true 
+                });
+                
+                const cashPaid = (sale.amountPaid != null) ? `₱${Number(sale.amountPaid).toFixed(2)}` : '—';
+                const changeAmt = (sale.change != null) ? `₱${Number(sale.change).toFixed(2)}` : '—';
+                let row = `
+                    <tr>
+                        <td class="ps-4 text-muted small">${timeStr}</td>
+                        <td>${itemsStr}</td>
+                        <td class="fw-bold">₱${sale.total.toFixed(2)}</td>
+                        <td class="fw-bold text-success">${cashPaid}</td>
+                        <td class="fw-bold text-primary">${changeAmt}</td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSale('${sale.id}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No sales found for this period.</td></tr>';
+            }
+
+            // --- B. Calculate Spoilage ---
+            let totalSpoilage = 0;
+            let spoiledProducts = [];
+            
+            const today = new Date();
+            const bufferDate = new Date(today);
+            bufferDate.setDate(today.getDate() + 3);
+            const bufferStr = bufferDate.toISOString().split('T')[0];
+
+            allProducts.forEach(p => {
+                if (p.expirationDate && p.expirationDate <= bufferStr && p.stock > 0) {
+                    let cost = p.supplyPrice || 0;
+                    let loss = cost * p.stock;
+                    totalSpoilage += loss;
+                    spoiledProducts.push({ name: p.name, loss: loss });
+                }
+            });
+
+            // --- C. Profit ---
+            let grossProfit = totalSales - totalCostOfGoods;
+            let netProfit = grossProfit - totalSpoilage;
+
+            let sortedProducts = Object.keys(productCount).map(key => {
+                return { name: key, qty: productCount[key] };
+            }).sort((a, b) => b.qty - a.qty);
+
+            // --- D. Suggestions ---
+            let suggestions = [];
+            
+            spoiledProducts.forEach(sp => {
+                suggestions.push({
+                    name: `Reduce Stock: ${sp.name}`,
+                    type: 'stop',
+                    msg: `₱${sp.loss.toLocaleString()} loss detected due to expiry. Buy less next time.`
+                });
+            });
+
+            if (suggestions.length < 5) {
+                sortedProducts.forEach(p => {
+                    let info = productMap[p.name] || { sell: 0, cost: 0 };
+                    let productProfit = (p.qty * info.sell) - (p.qty * info.cost);
+                    if (productProfit >= 2000) {
+                        suggestions.push({ name: p.name, type: 'buy', msg: `Generated ₱${productProfit.toLocaleString()} profit!` });
+                    }
+                });
+            }
+
+            if(suggestions.length === 0 && sortedProducts.length > 0) {
+                suggestions.push({ name: sortedProducts[0].name, type: 'buy', msg: 'Top seller, keep stocked.' });
+            }
+
+            if(suggestions.length === 0 && spoiledProducts.length === 0) {
+                 suggestions.push({ name: "Good Job!", type: 'buy', msg: "No spoilage and steady sales." });
+            }
+
+            // --- SORT CHART DATA ---
+            let sortedChartData = Object.entries(chartDataMap).map(([label, info]) => ({
+                label: label,
+                total: info.total,
+                timestamp: info.timestamp
+            })).sort((a, b) => a.timestamp - b.timestamp);
+
+            let chartLabels = sortedChartData.map(d => d.label);
+            let chartValues = sortedChartData.map(d => d.total);
+
+            updateUI(totalSales, data.length, netProfit, totalSpoilage, sortedProducts[0]?.name || "-", sortedProducts.slice(0, 5), chartLabels, chartValues, suggestions);
+        }
+
+        function updateUI(total, count, profit, spoilage, topItem, bestSellers, labels, values, suggestions) {
+            document.getElementById('totalSalesDisplay').innerText = "₱" + total.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('totalCountDisplay').innerText = count;
+            document.getElementById('spoilageDisplay').innerText = "-₱" + spoilage.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+            const profitDisplay = document.getElementById('totalProfitDisplay');
+            profitDisplay.innerText = "₱" + profit.toLocaleString(undefined, {minimumFractionDigits: 2});
+            
+            const profitCard = document.getElementById('profitCard');
+            if (profit < 0) {
+                profitCard.classList.remove('border-success');
+                profitCard.classList.add('border-danger');
+            } else {
+                profitCard.classList.remove('border-danger');
+                profitCard.classList.add('border-success');
+            }
+
+            salesChart.data.labels = labels;
+            salesChart.data.datasets[0].data = values;
+            salesChart.update();
+
+            const bestList = document.getElementById('bestSellersList');
+            bestList.innerHTML = "";
+            bestSellers.forEach((p, i) => {
+                bestList.innerHTML += `<div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2"><span><span class="badge bg-secondary me-2">${i+1}</span> ${p.name}</span><span class="fw-bold">${p.qty} sold</span></div>`;
+            });
+
+            const suggestList = document.getElementById('suggestionList');
+            suggestList.innerHTML = "";
+            if(suggestions.length === 0) suggestList.innerHTML = '<div class="p-3 text-center text-muted">No high-profit items found yet.</div>';
+            else {
+                suggestions.forEach(s => {
+                    let badgeClass = s.type === 'buy' ? 'bg-success' : 'bg-danger';
+                    let icon = s.type === 'buy' ? '<i class="bi bi-graph-up-arrow"></i>' : '<i class="bi bi-exclamation-triangle"></i>';
+                    suggestList.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center"><div><h6 class="m-0 fw-bold">${s.name}</h6><small class="text-muted">${s.msg}</small></div><span class="badge ${badgeClass} rounded-pill p-2">${icon}</span></div>`;
+                });
+            }
+        }
+
+        // --- SMART DELETE ---
+        window.deleteSale = async function(saleId) {
+            if(!confirm("⚠️ RESTORE STOCK?\n\nDeleting this record will automatically return the items to your Inventory.\n\nClick OK to Proceed.")) return;
+
+            try {
+                const saleRef = doc(db, "sales", saleId);
+                const saleSnap = await getDoc(saleRef);
+                
+                if (!saleSnap.exists()) { alert("Record not found!"); return; }
+                
+                const saleData = saleSnap.data();
+                const counts = {}; 
+                
+                if (Array.isArray(saleData.items)) {
+                    saleData.items.forEach(itemStr => counts[itemStr] = (counts[itemStr] || 0) + 1);
+                }
+
+                for (const [fullItemString, qtyToReturn] of Object.entries(counts)) {
+                    let productName = fullItemString.split(" (Exp:")[0];
+                    let expiryPart = fullItemString.split(" (Exp: ")[1];
+                    let targetExpiry = expiryPart ? expiryPart.replace(")", "") : null;
+
+                    const q = query(collection(db, "products"), where("name", "==", productName));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        const productDoc = querySnapshot.docs[0];
+                        const pData = productDoc.data();
+                        let batches = pData.batches || [];
+                        let currentStock = pData.stock || 0;
+
+                        let batchFound = false;
+                        if (targetExpiry) {
+                            for(let b of batches) {
+                                if(b.expiry === targetExpiry) {
+                                    b.qty += qtyToReturn;
+                                    batchFound = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if(!batchFound) {
+                            if(batches.length > 0) batches[0].qty += qtyToReturn;
+                        }
+
+                        await updateDoc(doc(db, "products", productDoc.id), {
+                            stock: currentStock + qtyToReturn,
+                            batches: batches
+                        });
+                    }
+                }
+
+                await deleteDoc(saleRef);
+                alert("Items returned to stock & Record deleted.");
+
+            } catch (e) {
+                console.error(e);
+                alert("Error: " + e.message);
+            }
+        }
+
+        // --- KEYBOARD SHORTCUT (ESC to Home) ---
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") {
+                window.location.href = 'home.html';
+            }
+        });
+    </script>
+
+    <button class="btn btn-dark shadow" onclick="document.getElementById('bgPicker').click()" style="position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; z-index: 9999;" title="Change Background">
+        <i class="bi bi-palette-fill"></i>
+    </button>
+    <input type="color" id="bgPicker" style="visibility: hidden; position: fixed; bottom: 30px; right: 30px;">
+
+    <script>
+        const picker = document.getElementById('bgPicker');
+        const savedColor = localStorage.getItem('sismo_bg_color');
+        if (savedColor) {
+            applyBgColor(savedColor);
+            picker.value = savedColor;
+        }
+        picker.addEventListener('input', (e) => {
+            const color = e.target.value;
+            applyBgColor(color);
+            localStorage.setItem('sismo_bg_color', color);
+        });
+    </script>
+</body>
+</html>

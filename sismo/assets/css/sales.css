@@ -1,0 +1,166 @@
+/* Smooth Background Transition */
+        body { transition: background-color 0.5s ease; }
+
+        .filter-btn.active {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+        .rec-badge-buy { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .rec-badge-stop { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+
+        /* --- GLASS EFFECT (See-through Cards/Tables) --- */
+        .card, .list-group-item, .table {
+            background-color: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(5px);
+        }
+        
+        /* Fix for Chart.js transparency */
+        canvas { background-color: transparent; }
+        
+        /* Transparent Table Header */
+        .table-light { --bs-table-bg: rgba(0, 0, 0, 0.05); }
+
+        
+        /* ============================================================
+   SISMO SALES MOBILE STYLES
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+    /* 1. LAYOUT & SPACING RESET */
+    body {
+        background-color: #f8f9fa;
+        padding-bottom: 80px; /* Space for floating bg button */
+    }
+
+    .container {
+        padding-top: 15px !important;
+        padding-bottom: 15px !important;
+        max-width: 100%;
+    }
+
+    /* 2. HEADER & NAVIGATION */
+    /* Stack the Home button and Filters */
+    .d-flex.justify-content-between.align-items-center.mb-4 {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 15px;
+        margin-bottom: 20px !important;
+    }
+
+    .btn-outline-secondary {
+        width: 100%; /* Full width Back button */
+        border-radius: 12px;
+        padding: 10px;
+    }
+
+    /* 3. SCROLLABLE FILTER BUTTONS (Pills) */
+    .btn-group {
+        display: flex;
+        justify-content: center;
+        overflow-x: auto;
+        white-space: nowrap;
+        width: 100%;
+        background: transparent;
+        gap: 8px; /* Space between buttons */
+        
+        /* Hide scrollbar */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .btn-group::-webkit-scrollbar { display: none; }
+
+    .filter-btn {
+        flex: 0 0 auto; /* Keep scrollable pills from shrinking */
+    }
+
+    /* 4. SUMMARY CARDS (2x2 GRID) */
+    /* Target the row containing the 4 summary cards */
+    .row.g-3.mb-4 {
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 0;
+    }
+
+    /* Force columns to be 50% width instead of stacking 100% */
+    .row.g-3.mb-4 > .col-md {
+        width: 50% !important;
+        flex: 0 0 50%;
+        padding: 5px; /* Tighter spacing */
+    }
+
+    /* Card Styling for Grid */
+    .card.border-start {
+        height: 100%;
+        padding: 15px !important;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+    }
+
+    .card.border-start h3 {
+        font-size: 1.2rem; /* Smaller text to fit */
+    }
+    .card.border-start p {
+        font-size: 0.7rem; /* Smaller label */
+    }
+
+    /* 5. CHART AREA */
+    #salesChart {
+        max-height: 200px; /* Limit chart height */
+    }
+
+    /* 6. DATE SEARCH INPUT */
+    .card-header .input-group {
+        width: 100% !important; /* Full width search bar */
+        margin-top: 10px;
+    }
+    
+    .card-header.d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 5px;
+    }
+
+    /* 7. TRANSACTION TABLE */
+    .table-scroll-container {
+        max-height: 300px !important; /* Shorter scroll area */
+    }
+
+    .table {
+        font-size: 0.8rem; /* Compact font */
+    }
+    
+    .table th, .table td {
+        padding: 8px 5px !important; /* Less padding */
+    }
+
+    /* Hide the "Action" text header, keep icon column */
+    .table thead th:last-child {
+        color: transparent; 
+    }
+
+    /* 8. SMART SUGGESTIONS & BEST SELLERS */
+    .list-group-item h6 {
+        font-size: 0.9rem;
+    }
+    .list-group-item small {
+        font-size: 0.75rem;
+        line-height: 1.2;
+        display: block;
+    }
+    
+    /* Make badges smaller */
+    .badge {
+        font-size: 0.7rem;
+        padding: 5px 8px !important;
+    }
+
+    /* 9. FLOATING COLOR PICKER */
+    button[onclick*="bgPicker"] {
+        bottom: 20px !important;
+        right: 20px !important;
+        width: 45px !important;
+        height: 45px !important;
+    }
+}
