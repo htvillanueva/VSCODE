@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISMO - Home</title>
+    <title>CAR-XPERT - Home</title>
     <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -12,12 +12,22 @@
 </head>
 <body>
 
-    <!-- ── Auth Guard ───────────────────────────── -->
-    <div id="sismo-guard" style="position:fixed;inset:0;background:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;"><div class="spinner-border text-secondary" role="status"></div></div>
+    <div id="sismo-guard" style="position:fixed;inset:0;background:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;"><div class="spinner-border text-danger" role="status"></div></div>
     <script type="module">
         import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        const _cfg = { apiKey:"AIzaSyAlTpK3kiqIGXsYZHgmES6MBaepo_5_i6Q", authDomain:"sismo-5323c.firebaseapp.com", projectId:"sismo-5323c", storageBucket:"sismo-5323c.firebasestorage.app", messagingSenderId:"179304155395", appId:"1:179304155395:web:fa017fa581335f4f140136" };
+        
+        // NEW CAR-XPERT KEYS
+        const _cfg = { 
+            apiKey: "AIzaSyD81sF9ClxA_HKRaEkmCSyHXXRCHR1efkk", 
+            authDomain: "car-xpert-76d1b.firebaseapp.com", 
+            projectId: "car-xpert-76d1b", 
+            storageBucket: "car-xpert-76d1b.firebasestorage.app", 
+            messagingSenderId: "180376885101", 
+            appId: "1:180376885101:web:0cdfffab3fe965e1722c64",
+            measurementId: "G-7E0D6YT43R"
+        };
+        
         const _app = getApps().length ? getApps()[0] : initializeApp(_cfg);
         onAuthStateChanged(getAuth(_app), user => {
             if (!user) { window.location.replace('index.html'); return; }
@@ -29,27 +39,25 @@
     <div id="page-header"></div>
     <script>
         renderPageHeader({
-            siteTitle: 'SISMO',
+            siteTitle: 'CAR-XPERT',
             rightHtml: `<a href="#" onclick="window._sismoSignOut()" class="btn btn-outline-danger">Logout</a>`
         });
     </script>
 
     <div class="container py-4">
 
-        <!-- Greeting -->
         <div class="d-flex align-items-center gap-2 mb-4">
-            <h4 class="mb-0 fw-bold">Good Day, SIS! ☀️</h4>
+            <h4 class="mb-0 fw-bold">Good Day, Partner! 🔧</h4>
         </div>
-
 
         <div class="row g-4">
             <div class="col-md-4">
                 <a href="view.html" class="text-decoration-none">
-                    <div class="card h-100 border-0 shadow-sm bg-primary text-white p-4" style="background-color: var(--bs-primary) !important;">
+                    <div class="card h-100 border-0 shadow-sm bg-danger text-white p-4" style="background-color: #dc3545 !important;">
                         <div class="card-body text-center">
                             <i class="bi bi-cart4 display-1 mb-3"></i>
-                            <h3>View Catalogue</h3>
-                            <p class="text-white-50">Record transactions (POS).</p>
+                            <h3>Point of Sale</h3>
+                            <p class="text-white-50">Record transactions and serve customers.</p>
                         </div>
                     </div>
                 </a>
@@ -60,8 +68,8 @@
                     <div class="card h-100 border-0 shadow-sm p-4">
                         <div class="card-body text-center text-secondary">
                             <i class="bi bi-graph-up-arrow display-1 mb-3"></i>
-                            <h3>Sales Report</h3>
-                            <p>View daily income & analysis.</p> 
+                            <h3>Sales & Analytics</h3>
+                            <p>View daily income & performance reports.</p> 
                         </div>   
                     </div>
                 </a>
@@ -73,7 +81,7 @@
                         <div class="card-body text-center text-secondary">
                             <i class="bi bi-box-seam display-1 mb-3"></i>
                             <h3>Manage Inventory</h3>
-                            <p>Update stocks.</p>
+                            <p>Manage car parts, fluids, and stock levels.</p>
                         </div>
                     </div>
                 </a>
@@ -87,7 +95,7 @@
                             <small class="text-muted" id="targetText">Loading...</small>
                         </div>
                         <div class="progress w-50" style="height: 15px;">
-                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-danger" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
@@ -100,35 +108,35 @@
         import { getFirestore, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // ==========================================
-        // 🚨 YOUR KEYS HERE 🚨
+        // 🚨 NEW CAR-XPERT KEYS 🚨
         // ==========================================
         const firebaseConfig = {
-            apiKey: "AIzaSyAlTpK3kiqIGXsYZHgmES6MBaepo_5_i6Q",
-            authDomain: "sismo-5323c.firebaseapp.com",
-            projectId: "sismo-5323c",
-            storageBucket: "sismo-5323c.firebasestorage.app",
-            messagingSenderId: "179304155395",
-            appId: "1:179304155395:web:fa017fa581335f4f140136"
+            apiKey: "AIzaSyD81sF9ClxA_HKRaEkmCSyHXXRCHR1efkk",
+            authDomain: "car-xpert-76d1b.firebaseapp.com",
+            projectId: "car-xpert-76d1b",
+            storageBucket: "car-xpert-76d1b.firebasestorage.app",
+            messagingSenderId: "180376885101",
+            appId: "1:180376885101:web:0cdfffab3fe965e1722c64",
+            measurementId: "G-7E0D6YT43R"
         };
 
         const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
         // --- CONFIGURATION ---
-        const DAILY_TARGET = 2500; // 🎯 Set your target amount here
+        const DAILY_TARGET = 15000; // 🎯 Updated target for Auto Supply
 
         // --- REAL-TIME LISTENER ---
         const salesCol = collection(db, "sales");
         
         onSnapshot(salesCol, (snapshot) => {
             let todayTotal = 0;
-            const todayStr = new Date().toDateString(); // e.g. "Fri Nov 17 2023"
+            const todayStr = new Date().toDateString(); 
 
             snapshot.forEach(doc => {
                 const data = doc.data();
                 if (data.date && data.date.toDate) {
                     const saleDate = data.date.toDate().toDateString();
-                    // If the sale happened TODAY
                     if (saleDate === todayStr) {
                         todayTotal += data.total;
                     }
@@ -142,25 +150,20 @@
             const targetElement = document.getElementById('targetText');
             const barElement = document.getElementById('progressBar');
 
-            // 1. Calculate Percentage
             let percentage = (currentAmount / DAILY_TARGET) * 100;
-            if (percentage > 100) percentage = 100; // Cap at 100% for the visual bar
+            if (percentage > 100) percentage = 100;
 
-            // 2. Update Text
             targetElement.innerHTML = `₱${currentAmount.toLocaleString()} / ₱${DAILY_TARGET.toLocaleString()}`;
-
-            // 3. Update Bar Width
             barElement.style.width = percentage + "%";
 
-            // 4. Change Color based on progress
             if (percentage >= 100) {
-                barElement.className = "progress-bar bg-success"; // Green (Goal Met)
+                barElement.className = "progress-bar bg-success"; 
                 barElement.innerText = "Goal Reached! 🎉";
             } else if (percentage >= 50) {
-                barElement.className = "progress-bar bg-primary"; // Blue (Halfway)
+                barElement.className = "progress-bar bg-warning text-dark"; 
                 barElement.innerText = Math.round(percentage) + "%";
             } else {
-                barElement.className = "progress-bar bg-warning text-dark"; // Yellow (Starting)
+                barElement.className = "progress-bar bg-danger"; 
                 barElement.innerText = Math.round(percentage) + "%";
             }
         }
@@ -173,7 +176,7 @@
 
     <script>
         const picker = document.getElementById('bgPicker');
-        const savedColor = localStorage.getItem('sismo_bg_color');
+        const savedColor = localStorage.getItem('carxpert_bg_color');
         if (savedColor) {
             applyBgColor(savedColor);
             picker.value = savedColor;
@@ -181,7 +184,7 @@
         picker.addEventListener('input', (e) => {
             const color = e.target.value;
             applyBgColor(color);
-            localStorage.setItem('sismo_bg_color', color);
+            localStorage.setItem('carxpert_bg_color', color);
         });
     </script>
 </body>
