@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISMO - Sales Analysis</title>
+    <title>CAR-XPERT - Sales Analysis</title>
     <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -15,40 +15,49 @@
 
     <style>
         /* =========================================
-           ACTIVE BUTTON STYLES (Blue Highlight)
+           ACTIVE BUTTON STYLES (CAR-XPERT Red Highlight)
            ========================================= */
         .filter-btn {
-            border-radius: 50px !important; /* Round pill shape */
+            border-radius: 50px !important; 
             margin: 0 2px;
             font-weight: 500;
             transition: all 0.2s ease;
         }
 
-        /* The Active Blue State */
         .filter-btn.active {
-            background-color: #0d6efd !important;
+            background-color: #dc3545 !important;
             color: white !important;
-            border-color: #0d6efd !important;
-            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+            border-color: #dc3545 !important;
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
             font-weight: bold;
         }
 
-        /* Hover effect for non-active buttons */
         .filter-btn:not(.active):hover {
             background-color: #f8f9fa;
-            color: #0d6efd;
+            color: #dc3545;
             border-color: #dee2e6;
         }
+        
+        .text-brand { color: #dc3545; }
     </style>
 </head>
 <body>
 
-    <!-- ── Auth Guard ───────────────────────────── -->
-    <div id="sismo-guard" style="position:fixed;inset:0;background:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;"><div class="spinner-border text-secondary" role="status"></div></div>
+    <div id="sismo-guard" style="position:fixed;inset:0;background:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;"><div class="spinner-border text-danger" role="status"></div></div>
     <script type="module">
         import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        const _cfg = { apiKey:"AIzaSyAlTpK3kiqIGXsYZHgmES6MBaepo_5_i6Q", authDomain:"sismo-5323c.firebaseapp.com", projectId:"sismo-5323c", storageBucket:"sismo-5323c.firebasestorage.app", messagingSenderId:"179304155395", appId:"1:179304155395:web:fa017fa581335f4f140136" };
+        
+        // NEW CAR-XPERT KEYS
+        const _cfg = { 
+            apiKey: "AIzaSyD81sF9ClxA_HKRaEkmCSyHXXRCHR1efkk", 
+            authDomain: "car-xpert-76d1b.firebaseapp.com", 
+            projectId: "car-xpert-76d1b", 
+            storageBucket: "car-xpert-76d1b.firebasestorage.app", 
+            messagingSenderId: "180376885101", 
+            appId: "1:180376885101:web:0cdfffab3fe965e1722c64",
+            measurementId: "G-7E0D6YT43R"
+        };
         const _app = getApps().length ? getApps()[0] : initializeApp(_cfg);
         onAuthStateChanged(getAuth(_app), user => {
             if (!user) { window.location.replace('index.html'); return; }
@@ -60,12 +69,11 @@
     <div id="page-header"></div>
     <script>
         renderPageHeader({
-            badge: 'Sales Report',
+            badge: 'Sales & Analytics',
             rightHtml: backButtonHtml({ label: 'Back to Home', mobileLabel: 'Home', href: 'home.html' })
         });
     </script>
 
-    <!-- Filter bar: horizontally scrollable on mobile -->
     <div class="filter-bar py-2 px-3" style="overflow-x:auto;white-space:nowrap;text-align:center;">
         <div class="btn-group shadow-sm" role="group">
             <button type="button" class="btn btn-white border filter-btn" onclick="setFilter('today', this)">Today</button>
@@ -88,10 +96,10 @@
             </div>
 
             <div class="col-md">
-                <div class="card border-0 shadow-sm p-3 border-start border-4 border-danger h-100">
+                <div class="card border-0 shadow-sm p-3 border-start border-4 border-warning h-100">
                     <div>
-                        <p class="text-muted mb-0 small">SPOILAGE (UNSELLABLE)</p>
-                        <h3 class="fw-bold m-0 text-danger" id="spoilageDisplay">-₱0.00</h3>
+                        <p class="text-muted mb-0 small">TOTAL COST (COGS)</p>
+                        <h3 class="fw-bold m-0 text-warning" id="cogsDisplay">-₱0.00</h3>
                     </div>
                 </div>
             </div>
@@ -106,7 +114,7 @@
             </div>
             
             <div class="col-md">
-                <div class="card border-0 shadow-sm p-3 border-start border-4 border-primary h-100">
+                <div class="card border-0 shadow-sm p-3 border-start border-4 border-danger h-100">
                     <div>
                         <p class="text-muted mb-0 small">TRANSACTIONS</p>
                         <h3 class="fw-bold m-0" id="totalCountDisplay">0</h3>
@@ -132,7 +140,7 @@
                         
                         <div class="input-group input-group-sm w-auto">
                             <input type="date" id="dateSearchInput" class="form-control" min="1000-01-01" max="9999-12-31">
-                            <button class="btn btn-primary" onclick="searchByDate()">
+                            <button class="btn btn-danger" onclick="searchByDate()">
                                 <i class="bi bi-search"></i>
                             </button>
                             <button class="btn btn-outline-secondary" onclick="resetDateSearch()" title="Clear Search">
@@ -147,7 +155,7 @@
                                 <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
                                     <tr>
                                         <th class="ps-4">Date/Time</th>
-                                        <th>Items Sold</th>
+                                        <th>Parts Sold</th>
                                         <th>Total</th>
                                         <th>Cash Paid</th>
                                         <th>Change</th>
@@ -166,7 +174,7 @@
             <div class="col-md-4">
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 fw-bold text-primary"><i class="bi bi-lightbulb-fill"></i> Smart Suggestions</h6>
+                        <h6 class="m-0 fw-bold text-danger"><i class="bi bi-lightbulb-fill"></i> Smart Suggestions</h6>
                     </div>
                     <div class="card-body p-0">
                         <div class="list-group list-group-flush" id="suggestionList">
@@ -174,7 +182,7 @@
                         </div>
                     </div>
                     <div class="card-footer bg-light">
-                        <small class="text-muted fst-italic">Target: >₱2,000 profit/month</small>
+                        <small class="text-muted fst-italic">Target: >₱15,000 profit/month</small>
                     </div>
                 </div>
 
@@ -194,19 +202,7 @@
         import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, query, orderBy, deleteDoc, doc, getDoc, getDocs, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ==========================================
-        // 🚨 YOUR KEYS HERE 🚨
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyAlTpK3kiqIGXsYZHgmES6MBaepo_5_i6Q",
-            authDomain: "sismo-5323c.firebaseapp.com",
-            projectId: "sismo-5323c",
-            storageBucket: "sismo-5323c.firebasestorage.app",
-            messagingSenderId: "179304155395",
-            appId: "1:179304155395:web:fa017fa581335f4f140136"
-        };
-
-        const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+        const app = getApps()[0];
         const db = getFirestore(app);
 
         // GLOBALS
@@ -225,8 +221,8 @@
                 datasets: [{
                     label: 'Revenue (₱)',
                     data: [],
-                    borderColor: '#0d6efd',
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
                     borderWidth: 2,
                     tension: 0.3,
                     fill: true
@@ -256,7 +252,6 @@
             snapshot.forEach(docSnapshot => {
                 let sale = docSnapshot.data();
                 sale.id = docSnapshot.id;
-                // Ensure date is a JS Date object
                 if(sale.date && sale.date.toDate) sale.jsDate = sale.date.toDate();
                 else sale.jsDate = new Date();
                 allSalesData.push(sale);
@@ -264,23 +259,13 @@
             applyFilter();
         });
 
-        // 3. UPDATED FILTER LOGIC (Handling Buttons)
+        // 3. FILTER LOGIC
         window.setFilter = function(filterType, btnElement) {
             currentFilter = filterType;
             document.getElementById('dateSearchInput').value = "";
-            
-            // 1. Remove active from all buttons
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            
-            // 2. Add active to clicked button
-            // If passed via onclick(..., this)
-            if(btnElement) {
-                btnElement.classList.add('active');
-            } else {
-                // Fallback
-                event.target.classList.add('active');
-            }
-            
+            if(btnElement) btnElement.classList.add('active');
+            else event.target.classList.add('active');
             applyFilter();
         }
 
@@ -294,9 +279,6 @@
 
         window.resetDateSearch = function() {
             document.getElementById('dateSearchInput').value = "";
-            
-            // Manually trigger the "All Time" click behavior
-            // Find the all time button (it's the last one or explicitly find it)
             const allBtn = document.querySelectorAll('.filter-btn')[4]; 
             if(allBtn) setFilter('all', allBtn);
             else setFilter('all');
@@ -317,19 +299,15 @@
                 const saleDate = new Date(sale.jsDate);
                 saleDate.setHours(0,0,0,0);
 
-                if (currentFilter === 'today') {
-                    return saleDate.getTime() === today.getTime();
-                } else if (currentFilter === 'week') {
+                if (currentFilter === 'today') return saleDate.getTime() === today.getTime();
+                else if (currentFilter === 'week') {
                     const oneWeekAgo = new Date(today);
                     oneWeekAgo.setDate(today.getDate() - 7);
                     return saleDate >= oneWeekAgo;
-                } else if (currentFilter === 'month') {
-                    return saleDate.getMonth() === today.getMonth() && saleDate.getFullYear() === today.getFullYear();
-                } else if (currentFilter === 'year') {
-                    return saleDate.getFullYear() === today.getFullYear();
-                } else if (currentFilter === 'specific_date' && targetDate) {
-                    return saleDate.getTime() === targetDate.getTime();
-                }
+                } 
+                else if (currentFilter === 'month') return saleDate.getMonth() === today.getMonth() && saleDate.getFullYear() === today.getFullYear();
+                else if (currentFilter === 'year') return saleDate.getFullYear() === today.getFullYear();
+                else if (currentFilter === 'specific_date' && targetDate) return saleDate.getTime() === targetDate.getTime();
                 return true; 
             });
 
@@ -346,20 +324,20 @@
             const tableBody = document.getElementById('recentTxTable');
             tableBody.innerHTML = "";
 
-            // --- A. Process Sales Data ---
+            // Process Sales Data
             data.forEach(sale => {
                 totalSales += sale.total;
                 let items = Array.isArray(sale.items) ? sale.items : [sale.items];
                 let currentTxCounts = {}; 
 
                 items.forEach(itemString => {
-                    let cleanName = itemString.split(" (Exp:")[0]; 
+                    let cleanName = itemString; 
                     productCount[cleanName] = (productCount[cleanName] || 0) + 1;
                     
                     let itemInfo = productMap[cleanName];
                     if (itemInfo) totalCostOfGoods += itemInfo.cost;
 
-                    currentTxCounts[itemString] = (currentTxCounts[itemString] || 0) + 1;
+                    currentTxCounts[cleanName] = (currentTxCounts[cleanName] || 0) + 1;
                 });
 
                 // Chart Aggregation
@@ -376,7 +354,7 @@
                 // Table Row
                 let formattedItems = [];
                 for (let [name, qty] of Object.entries(currentTxCounts)) {
-                    formattedItems.push(`<span class="fw-bold">${qty}x</span> ${name}`);
+                    formattedItems.push(`<span class="fw-bold text-danger">${qty}x</span> ${name}`);
                 }
                 let itemsStr = formattedItems.join("<br>");
 
@@ -387,6 +365,7 @@
                 
                 const cashPaid = (sale.amountPaid != null) ? `₱${Number(sale.amountPaid).toFixed(2)}` : '—';
                 const changeAmt = (sale.change != null) ? `₱${Number(sale.change).toFixed(2)}` : '—';
+                
                 let row = `
                     <tr>
                         <td class="ps-4 text-muted small">${timeStr}</td>
@@ -395,8 +374,8 @@
                         <td class="fw-bold text-success">${cashPaid}</td>
                         <td class="fw-bold text-primary">${changeAmt}</td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSale('${sale.id}')">
-                                <i class="bi bi-trash"></i>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSale('${sale.id}')" title="Delete & Restore Stock">
+                                <i class="bi bi-arrow-counterclockwise"></i>
                             </button>
                         </td>
                     </tr>
@@ -408,62 +387,28 @@
                 tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No sales found for this period.</td></tr>';
             }
 
-            // --- B. Calculate Spoilage ---
-            let totalSpoilage = 0;
-            let spoiledProducts = [];
-            
-            const today = new Date();
-            const bufferDate = new Date(today);
-            bufferDate.setDate(today.getDate() + 3);
-            const bufferStr = bufferDate.toISOString().split('T')[0];
-
-            allProducts.forEach(p => {
-                if (p.expirationDate && p.expirationDate <= bufferStr && p.stock > 0) {
-                    let cost = p.supplyPrice || 0;
-                    let loss = cost * p.stock;
-                    totalSpoilage += loss;
-                    spoiledProducts.push({ name: p.name, loss: loss });
-                }
-            });
-
-            // --- C. Profit ---
-            let grossProfit = totalSales - totalCostOfGoods;
-            let netProfit = grossProfit - totalSpoilage;
+            // Profit Calculation (No Spoilage)
+            let netProfit = totalSales - totalCostOfGoods;
 
             let sortedProducts = Object.keys(productCount).map(key => {
                 return { name: key, qty: productCount[key] };
             }).sort((a, b) => b.qty - a.qty);
 
-            // --- D. Suggestions ---
+            // Suggestions based on High Margin rather than Spoilage
             let suggestions = [];
-            
-            spoiledProducts.forEach(sp => {
-                suggestions.push({
-                    name: `Reduce Stock: ${sp.name}`,
-                    type: 'stop',
-                    msg: `₱${sp.loss.toLocaleString()} loss detected due to expiry. Buy less next time.`
-                });
+            sortedProducts.forEach(p => {
+                let info = productMap[p.name] || { sell: 0, cost: 0 };
+                let productProfit = (p.qty * info.sell) - (p.qty * info.cost);
+                if (productProfit >= 5000) {
+                    suggestions.push({ name: p.name, type: 'buy', msg: `Highly profitable! Generated ₱${productProfit.toLocaleString()} net profit.` });
+                }
             });
 
-            if (suggestions.length < 5) {
-                sortedProducts.forEach(p => {
-                    let info = productMap[p.name] || { sell: 0, cost: 0 };
-                    let productProfit = (p.qty * info.sell) - (p.qty * info.cost);
-                    if (productProfit >= 2000) {
-                        suggestions.push({ name: p.name, type: 'buy', msg: `Generated ₱${productProfit.toLocaleString()} profit!` });
-                    }
-                });
-            }
-
             if(suggestions.length === 0 && sortedProducts.length > 0) {
-                suggestions.push({ name: sortedProducts[0].name, type: 'buy', msg: 'Top seller, keep stocked.' });
+                suggestions.push({ name: sortedProducts[0].name, type: 'buy', msg: 'Top moving part, ensure sufficient stock levels.' });
             }
 
-            if(suggestions.length === 0 && spoiledProducts.length === 0) {
-                 suggestions.push({ name: "Good Job!", type: 'buy', msg: "No spoilage and steady sales." });
-            }
-
-            // --- SORT CHART DATA ---
+            // SORT CHART DATA
             let sortedChartData = Object.entries(chartDataMap).map(([label, info]) => ({
                 label: label,
                 total: info.total,
@@ -473,13 +418,13 @@
             let chartLabels = sortedChartData.map(d => d.label);
             let chartValues = sortedChartData.map(d => d.total);
 
-            updateUI(totalSales, data.length, netProfit, totalSpoilage, sortedProducts[0]?.name || "-", sortedProducts.slice(0, 5), chartLabels, chartValues, suggestions);
+            updateUI(totalSales, data.length, netProfit, totalCostOfGoods, sortedProducts.slice(0, 5), chartLabels, chartValues, suggestions);
         }
 
-        function updateUI(total, count, profit, spoilage, topItem, bestSellers, labels, values, suggestions) {
+        function updateUI(total, count, profit, cogs, bestSellers, labels, values, suggestions) {
             document.getElementById('totalSalesDisplay').innerText = "₱" + total.toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('totalCountDisplay').innerText = count;
-            document.getElementById('spoilageDisplay').innerText = "-₱" + spoilage.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('cogsDisplay').innerText = "-₱" + cogs.toLocaleString(undefined, {minimumFractionDigits: 2});
 
             const profitDisplay = document.getElementById('totalProfitDisplay');
             profitDisplay.innerText = "₱" + profit.toLocaleString(undefined, {minimumFractionDigits: 2});
@@ -500,24 +445,24 @@
             const bestList = document.getElementById('bestSellersList');
             bestList.innerHTML = "";
             bestSellers.forEach((p, i) => {
-                bestList.innerHTML += `<div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2"><span><span class="badge bg-secondary me-2">${i+1}</span> ${p.name}</span><span class="fw-bold">${p.qty} sold</span></div>`;
+                bestList.innerHTML += `<div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2"><span><span class="badge bg-danger me-2">${i+1}</span> ${p.name}</span><span class="fw-bold">${p.qty} sold</span></div>`;
             });
 
             const suggestList = document.getElementById('suggestionList');
             suggestList.innerHTML = "";
-            if(suggestions.length === 0) suggestList.innerHTML = '<div class="p-3 text-center text-muted">No high-profit items found yet.</div>';
+            if(suggestions.length === 0) suggestList.innerHTML = '<div class="p-3 text-center text-muted">Awaiting more sales data.</div>';
             else {
                 suggestions.forEach(s => {
-                    let badgeClass = s.type === 'buy' ? 'bg-success' : 'bg-danger';
+                    let badgeClass = s.type === 'buy' ? 'bg-success' : 'bg-warning text-dark';
                     let icon = s.type === 'buy' ? '<i class="bi bi-graph-up-arrow"></i>' : '<i class="bi bi-exclamation-triangle"></i>';
                     suggestList.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center"><div><h6 class="m-0 fw-bold">${s.name}</h6><small class="text-muted">${s.msg}</small></div><span class="badge ${badgeClass} rounded-pill p-2">${icon}</span></div>`;
                 });
             }
         }
 
-        // --- SMART DELETE ---
+        // --- SMART DELETE (Simplified for Auto Parts) ---
         window.deleteSale = async function(saleId) {
-            if(!confirm("⚠️ RESTORE STOCK?\n\nDeleting this record will automatically return the items to your Inventory.\n\nClick OK to Proceed.")) return;
+            if(!confirm("⚠️ RESTORE STOCK?\n\nDeleting this record will automatically return the auto parts to your Inventory.\n\nClick OK to Proceed.")) return;
 
             try {
                 const saleRef = doc(db, "sales", saleId);
@@ -532,44 +477,22 @@
                     saleData.items.forEach(itemStr => counts[itemStr] = (counts[itemStr] || 0) + 1);
                 }
 
-                for (const [fullItemString, qtyToReturn] of Object.entries(counts)) {
-                    let productName = fullItemString.split(" (Exp:")[0];
-                    let expiryPart = fullItemString.split(" (Exp: ")[1];
-                    let targetExpiry = expiryPart ? expiryPart.replace(")", "") : null;
-
+                for (const [productName, qtyToReturn] of Object.entries(counts)) {
                     const q = query(collection(db, "products"), where("name", "==", productName));
                     const querySnapshot = await getDocs(q);
 
                     if (!querySnapshot.empty) {
                         const productDoc = querySnapshot.docs[0];
-                        const pData = productDoc.data();
-                        let batches = pData.batches || [];
-                        let currentStock = pData.stock || 0;
-
-                        let batchFound = false;
-                        if (targetExpiry) {
-                            for(let b of batches) {
-                                if(b.expiry === targetExpiry) {
-                                    b.qty += qtyToReturn;
-                                    batchFound = true;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        if(!batchFound) {
-                            if(batches.length > 0) batches[0].qty += qtyToReturn;
-                        }
+                        const currentStock = productDoc.data().stock || 0;
 
                         await updateDoc(doc(db, "products", productDoc.id), {
-                            stock: currentStock + qtyToReturn,
-                            batches: batches
+                            stock: currentStock + qtyToReturn
                         });
                     }
                 }
 
                 await deleteDoc(saleRef);
-                alert("Items returned to stock & Record deleted.");
+                alert("Parts returned to stock & Record deleted.");
 
             } catch (e) {
                 console.error(e);
@@ -592,7 +515,7 @@
 
     <script>
         const picker = document.getElementById('bgPicker');
-        const savedColor = localStorage.getItem('sismo_bg_color');
+        const savedColor = localStorage.getItem('carxpert_bg_color');
         if (savedColor) {
             applyBgColor(savedColor);
             picker.value = savedColor;
@@ -600,7 +523,7 @@
         picker.addEventListener('input', (e) => {
             const color = e.target.value;
             applyBgColor(color);
-            localStorage.setItem('sismo_bg_color', color);
+            localStorage.setItem('carxpert_bg_color', color);
         });
     </script>
 </body>
