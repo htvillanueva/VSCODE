@@ -3,185 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAR-XPERT - Login</title>
-    <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="assets/css/index.css">
-    <script src="assets/js/components.js"></script>
-
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-       (function(){
-          emailjs.init("k9LMDyG74RrAVmd5R");
-       })();
-    </script>
+    <title>CAR-XPERT | Login</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { color: #d32f2f; margin-bottom: 0.5rem; font-weight: bold; }
+        p { color: #666; margin-bottom: 2rem; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; outline: none; }
+        input:focus { border-color: #d32f2f; }
+        button { width: 100%; padding: 12px; background: #d32f2f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; margin-top: 10px; }
+        button:hover { background: #b71c1c; }
+        #message { margin-top: 15px; font-size: 0.9rem; min-height: 20px; }
+        .loader { color: #666; display: none; margin-top: 10px; }
+    </style>
 </head>
 <body>
 
-    <div class="login-card text-center">
-        <img src="assets/img/logo_label.png" alt="CAR-XPERT Logo" class="d-block mx-auto" style="width: 220px;">
-        <p class="text-muted mb-4 small">Auto Supply Inventory System</p>
-        
-        <div id="login-form">
-            <div class="mb-3 text-start">
-                <label class="form-label fw-bold small text-secondary">Username / Phone</label>
-                <input type="text" id="loginInput" class="form-control" placeholder="username">
-            </div>
-
-            <div class="mb-3 text-start">
-                <label class="form-label fw-bold small text-secondary">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="••••••••">
-            </div>
-            
-            <button id="btn-login" class="btn btn-danger w-100 btn-lg py-2 mt-3 fw-bold">
-                Login
-            </button>
-            
-            <div class="mt-4 text-center">
-                <small class="text-muted" style="font-size: 0.8rem;">Forgot Password? Contact Admin.</small>
-            </div>
-        </div>
-
-        <div id="loader" class="d-none mt-4">
-            <div class="spinner-border text-danger" role="status"></div>
-            <p class="text-muted mt-2 small">Authenticating...</p>
-        </div>
+<div class="login-card">
+    <h1>CAR-XPERT</h1>
+    <p>Auto Supply Inventory System</p>
+    
+    <div id="login-ui">
+        <input type="text" id="username" placeholder="Username (e.g. autosupply)">
+        <input type="password" id="password" placeholder="Password">
+        <button id="loginBtn" onclick="handleLogin()">Login to System</button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    <div id="loader" class="loader">Authenticating... Please wait.</div>
+    <div id="message"></div>
+</div>
 
-        // ==========================================
-        // 🚨 NEW CAR-XPERT KEYS 🚨
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyD81sF9ClxA_HKRaEkmCSyHXXRCHR1efkk",
-            authDomain: "car-xpert-76d1b.firebaseapp.com",
-            projectId: "car-xpert-76d1b",
-            storageBucket: "car-xpert-76d1b.firebasestorage.app",
-            messagingSenderId: "180376885101",
-            appId: "1:180376885101:web:0cdfffab3fe965e1722c64",
-            measurementId: "G-7E0D6YT43R"
-        };
+<script>
+    // 1. CAR-XPERT FIREBASE CONFIG
+    const firebaseConfig = {
+        apiKey: "AIzaSyD81sF9ClxA_HKRaEkmCSyHXXRCHR1efkk",
+        authDomain: "car-xpert-76d1b.firebaseapp.com",
+        projectId: "car-xpert-76d1b",
+        storageBucket: "car-xpert-76d1b.firebasestorage.app",
+        messagingSenderId: "180376885101",
+        appId: "1:180376885101:web:0cdfffab3fe965e1722c64",
+        measurementId: "G-7E0D6YT43R"
+    };
+    firebase.initializeApp(firebaseConfig);
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+    // 2. YOUR NEW EMAILJS KEYS
+    const SERVICE_ID = "service_yjc1cgi"; 
+    const TEMPLATE_ID = "template_d067t8g"; 
+    const PUBLIC_KEY = "gS2Tda4tn4Y0PdgZ1";
 
-        let _loggingIn = false;
-        onAuthStateChanged(auth, user => { if (user && !_loggingIn) window.location.replace('home.html'); });
+    emailjs.init(PUBLIC_KEY);
 
-        const btnLogin = document.getElementById('btn-login');
+    async function handleLogin() {
+        const user = document.getElementById('username').value.trim();
+        const pass = document.getElementById('password').value;
+        const msg = document.getElementById('message');
         const loader = document.getElementById('loader');
-        const loginForm = document.getElementById('login-form');
+        const loginUI = document.getElementById('login-ui');
 
-        ['loginInput', 'password'].forEach(id => {
-            document.getElementById(id).addEventListener('keydown', e => {
-                if (e.key === 'Enter') btnLogin.click();
+        if (!user || !pass) {
+            msg.style.color = "red";
+            msg.innerText = "Please enter both fields.";
+            return;
+        }
+
+        // Combine username with business domain
+        const fullEmail = user.includes('@') ? user : user + "@carxpert.com"; 
+
+        // UI Feedback
+        msg.innerText = "";
+        loginUI.style.display = "none";
+        loader.style.display = "block";
+
+        try {
+            // FIREBASE AUTHENTICATION
+            const userCredential = await firebase.auth().signInWithEmailAndPassword(fullEmail, pass);
+            
+            // EMAIL NOTIFICATION
+            await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+                user_name: user,
+                login_time: new Date().toLocaleString(),
+                system_name: "CAR-XPERT AUTO SUPPLY"
             });
-        });
 
-        // ── Encrypt login state ──────
-        async function encryptAndSetLoginCookie(uid, email) {
-            const enc      = new TextEncoder();
-            const APP_SALT = 'carxpert-app-v1'; // Updated Salt
+            // REDIRECT TO HOME
+            window.location.href = "home.html"; 
 
-            const keyMaterial = await crypto.subtle.importKey(
-                'raw', enc.encode(APP_SALT), 'PBKDF2', false, ['deriveKey']
-            );
-            const key = await crypto.subtle.deriveKey(
-                { name: 'PBKDF2', salt: enc.encode(uid), iterations: 100000, hash: 'SHA-256' },
-                keyMaterial,
-                { name: 'AES-GCM', length: 256 },
-                false,
-                ['encrypt']
-            );
-
-            const iv      = crypto.getRandomValues(new Uint8Array(12));
-            const payload = enc.encode(JSON.stringify({ uid, email, ts: Date.now() }));
-            const cipher  = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, payload);
-
-            const combined = new Uint8Array(iv.byteLength + cipher.byteLength);
-            combined.set(iv, 0);
-            combined.set(new Uint8Array(cipher), iv.byteLength);
-
-            const b64      = btoa(String.fromCharCode(...combined));
-            const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
-            document.cookie =
-                `carxpert_session=${encodeURIComponent(b64)}; expires=${expires}; path=/; SameSite=Strict`; // Updated Cookie Name
+        } catch (error) {
+            console.error(error);
+            loginUI.style.display = "block";
+            loader.style.display = "none";
+            msg.style.color = "red";
+            
+            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                msg.innerText = "Invalid username or password.";
+            } else {
+                msg.innerText = "Error: " + error.message;
+            }
         }
+    }
 
-        btnLogin.addEventListener('click', async () => {
-            const rawInput = document.getElementById('loginInput').value.trim();
-            const password = document.getElementById('password').value;
-            let finalEmail = rawInput;
-
-            if (!rawInput || !password) {
-                alert("Please enter your login details.");
-                return;
-            }
-
-            // Updated fake domain for Auto Supply
-            if (!rawInput.includes('@')) {
-                finalEmail = rawInput + "@carxpert.com";
-            }
-
-            loginForm.classList.add('d-none');
-            loader.classList.remove('d-none');
-
-            _loggingIn = true;
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, finalEmail, password);
-                await encryptAndSetLoginCookie(userCredential.user.uid, userCredential.user.email);
-
-                const emailParams = {
-                    to_name: "CAR-XPERT Admin",
-                    user_phone: rawInput,
-                    login_time: new Date().toLocaleString(),
-                    message: "User logged into the CAR-XPERT Auto Supply System."
-                };
-
-                emailjs.send('service_AIMV', 'template_uimz4a8', emailParams)
-                    .then(() => { window.location.href = "home.html"; })
-                    .catch(() => { window.location.href = "home.html"; });
-
-                emailjs.send('service_AIMV', 'template_dlg57g9', emailParams)
-                    .then(() => { window.location.href = "home.html"; })
-                    .catch(() => { window.location.href = "home.html"; });
-
-            } catch (error) {
-                _loggingIn = false;
-                console.error("Login Error:", error.message);
-                loader.classList.add('d-none');
-                loginForm.classList.remove('d-none');
-
-                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
-                    alert("Incorrect Username or Password.");
-                } else {
-                    alert("Login Failed: " + error.message);
-                }
-            }
-        });
-    </script>
-
-    <button class="btn btn-dark shadow" onclick="document.getElementById('bgPicker').click()" style="position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; z-index: 9999;" title="Change Background">
-        <i class="bi bi-palette-fill"></i>
-    </button>
-    <input type="color" id="bgPicker" style="visibility: hidden; position: fixed; bottom: 30px; right: 30px;">
-
-    <script>
-        const picker = document.getElementById('bgPicker');
-        const savedColor = localStorage.getItem('carxpert_bg_color');
-        if (savedColor) {
-            applyBgColor(savedColor);
-            picker.value = savedColor;
+    // Allow pressing "Enter" to login
+    document.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            handleLogin();
         }
-        picker.addEventListener('input', (e) => {
-            const color = e.target.value;
-            applyBgColor(color);
-            localStorage.setItem('carxpert_bg_color', color);
-        });
-    </script>
+    });
+</script>
+
 </body>
 </html>
