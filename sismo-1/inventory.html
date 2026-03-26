@@ -148,4 +148,440 @@
                         <div class="row">
                             <div class="col-6 mb-3">
                                 <label class="form-label text-muted">Supply Cost (₱)</label>
-                                <input type="number" id="prodSupplyPrice" class="form-control" placeholder="
+                                <input type="number" id="prodSupplyPrice" class="form-control" placeholder="0.00" step="0.01" required>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label fw-bold">Selling Price (₱)</label>
+                                <input type="number" id="prodPrice" class="form-control" placeholder="0.00" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Initial Stock</label>
+                                <input type="number" id="prodStock" class="form-control" placeholder="0" min="0" required>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Category</label>
+                                <select id="prodCategory" class="form-select" required>
+                                    <option>Engine Parts</option>
+                                    <option>Fluids & Oils</option>
+                                    <option>Brakes & Suspension</option>
+                                    <option>Electrical</option>
+                                    <option>Accessories</option>
+                                    <option>Tools</option>
+                                    <option>Others</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btnSaveProduct">Save Part</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editProductModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-danger">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold">Edit Part Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProductForm">
+                        <input type="hidden" id="editProdId">
+                        
+                        <div class="mb-3 p-3 bg-light rounded border">
+                            <label class="form-label fw-bold small">Update Image</label>
+                            <input type="file" id="editProdImgFile" class="form-control mb-2" accept="image/*" onchange="previewFile('edit', this)">
+                            <div class="text-center mt-2">
+                                <img id="editImgPreview" src="" class="img-thumbnail" style="max-height: 100px; display: none;">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Part Name</label>
+                            <input type="text" id="editProdName" class="form-control" required>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Part Number (OEM)</label>
+                                <input type="text" id="editProdOEM" class="form-control" required>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Compatibility</label>
+                                <input type="text" id="editProdCompat" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label fw-bold">Selling Price (₱)</label>
+                                <input type="number" id="editProdPrice" class="form-control" step="0.01" required>
+                            </div>
+                             <div class="col-6 mb-3">
+                                <label class="form-label">Category</label>
+                                <select id="editProdCategory" class="form-select" required>
+                                    <option>Engine Parts</option>
+                                    <option>Fluids & Oils</option>
+                                    <option>Brakes & Suspension</option>
+                                    <option>Electrical</option>
+                                    <option>Accessories</option>
+                                    <option>Tools</option>
+                                    <option>Others</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 border-top pt-3">
+                             <label class="form-label fw-bold text-danger">Manual Stock Adjustment</label>
+                             <div class="input-group">
+                                <span class="input-group-text">Current Stock</span>
+                                <input type="number" id="editProdStock" class="form-control" min="0" required>
+                             </div>
+                             <small class="text-muted">Only change this for manual corrections. Use the "Restock" truck button for new shipments.</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger fw-bold" id="btnUpdateProduct">Update Details</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="restockModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-success">
+                <div class="modal-header bg-success text-white">
+                    <input type="hidden" id="restockProdId">
+                    
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Quantity Received</label>
+                            <input type="number" id="restockQty" class="form-control" placeholder="0" min="1" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Supply Cost (Per Unit)</label>
+                            <input type="number" id="restockCost" class="form-control" placeholder="₱0.00" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date Received</label>
+                        <input type="date" id="restockReceived" class="form-control" required> 
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success fw-bold" id="btnSubmitRestock">Confirm Restock</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module">
+        import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        // Use existing initialized app
+        const app = getApps()[0];
+        const db = getFirestore(app);
+
+        // Set Default Date for Restock
+        document.getElementById('restockReceived').valueAsDate = new Date();
+
+        let allProducts = []; 
+        let activeCategoryFilter = 'All';
+
+        // --- IMAGE COMPRESSION HELPER ---
+        const compressImage = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                        } else {
+                            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                };
+                reader.onerror = error => reject(error);
+            });
+        };
+
+        window.previewFile = (type, input) => {
+            const img = document.getElementById(type === 'add' ? 'addImgPreview' : 'editImgPreview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // --- 1. LOAD DATA ---
+        const q = query(collection(db, "products"));
+        onSnapshot(q, (snapshot) => {
+            allProducts = []; 
+            snapshot.forEach((doc) => {
+                const item = doc.data();
+                item.id = doc.id; 
+                allProducts.push(item);
+            });
+            window.allProductsGlobal = allProducts;
+            filterCategory(activeCategoryFilter);
+        });
+
+        // --- 2. RENDER TABLE ---
+        window.renderTable = function(productsToRender) {
+            const tableBody = document.getElementById('inventoryTableBody');
+            tableBody.innerHTML = "";
+            
+            if(productsToRender.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No auto parts found.</td></tr>';
+                return;
+            }
+
+            productsToRender.forEach((item) => {
+                // Color Logic: Red for Out of Stock, Yellow for Low Stock (< 5)
+                let rowClass = ""; 
+                if (item.stock === 0) {
+                    rowClass = "table-danger text-muted"; 
+                } else if (item.stock < 5) {
+                    rowClass = "table-warning"; 
+                }
+
+                const row = `
+                    <tr class="${rowClass}">
+                        <td class="ps-4 fw-bold">
+                            ${item.name} <br>
+                            <small class="text-muted fw-normal">${item.compat || 'Universal'}</small>
+                        </td>
+                        <td class="text-muted">${item.category}</td>
+                        <td class="text-dark fw-bold">${item.oem || 'N/A'}</td>
+                        <td class="text-secondary">₱${(item.supplyPrice || 0).toFixed(2)}</td>
+                        <td class="text-danger fw-bold">₱${item.price.toFixed(2)}</td>
+                        <td>
+                            <span class="badge ${item.stock > 0 ? 'bg-success' : 'bg-danger'} fs-6">${item.stock}</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-success me-1 restock-btn" data-id="${item.id}" title="Restock Part"><i class="bi bi-truck"></i></button>
+                            <button class="btn btn-sm btn-outline-primary edit-btn me-1" data-id="${item.id}" title="Edit Info"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.id}" data-name="${item.name}"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+
+            attachButtonListeners();
+        }
+
+        // --- 3. HELPER FUNCTIONS ---
+        window.filterCategory = function(cat) {
+            activeCategoryFilter = cat; 
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if(btn.innerText.includes(cat) || (cat === 'All' && btn.innerText.includes('All'))) {
+                    btn.classList.remove('btn-outline-secondary'); btn.classList.add('btn-dark');
+                } else {
+                    btn.classList.add('btn-outline-secondary'); btn.classList.remove('btn-dark');
+                }
+            });
+            if (cat === 'All') renderTable(allProducts);
+            else renderTable(allProducts.filter(item => item.category === cat));
+        }
+
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            renderTable(allProducts.filter(item => 
+                item.name.toLowerCase().includes(query) || 
+                item.category.toLowerCase().includes(query) ||
+                (item.oem && item.oem.toLowerCase().includes(query))
+            ));
+        }
+        document.getElementById('searchInput').addEventListener('input', performSearch);
+        document.getElementById('btnSearch').addEventListener('click', performSearch);
+
+        function attachButtonListeners() {
+            document.querySelectorAll('.restock-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const product = allProducts.find(p => p.id === e.target.closest('button').getAttribute('data-id'));
+                if(product) openRestockModal(product);
+            }));
+            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const product = allProducts.find(p => p.id === e.target.closest('button').getAttribute('data-id'));
+                if(product) openEditModal(product);
+            }));
+            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => {
+                const b = e.target.closest('button');
+                if(confirm(`Delete "${b.getAttribute('data-name')}"?`)) {
+                    await deleteDoc(doc(db, "products", b.getAttribute('data-id')));
+                }
+            }));
+        }
+
+        // --- 4. ACTION HANDLERS ---
+
+        // A. SAVE NEW PART
+        document.getElementById('btnSaveProduct').addEventListener('click', async () => {
+            const btn = document.getElementById('btnSaveProduct');
+            
+            const name = document.getElementById('prodName').value;
+            const oem = document.getElementById('prodOEM').value;
+            const compat = document.getElementById('prodCompat').value;
+            const supplyPrice = parseFloat(document.getElementById('prodSupplyPrice').value);
+            const price = parseFloat(document.getElementById('prodPrice').value);
+            const stock = parseInt(document.getElementById('prodStock').value);
+            const category = document.getElementById('prodCategory').value;
+
+            if (!name || !price || isNaN(stock)) {
+                alert("Please fill in Name, Price, and Stock."); return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+            
+            const fileInput = document.getElementById('prodImgFile');
+            let finalImageString = "";
+
+            try {
+                if (fileInput.files[0]) {
+                    finalImageString = await compressImage(fileInput.files[0]);
+                } 
+
+                await addDoc(collection(db, "products"), {
+                    name, oem, compat, supplyPrice, price, stock, category, 
+                    createdAt: new Date(),
+                    image: finalImageString
+                });
+
+                alert("Auto Part Added Successfully!");
+                bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+                document.getElementById('addProductForm').reset();
+                document.getElementById('addImgPreview').style.display = 'none';
+            } catch (e) { 
+                alert("Error: " + e.message); 
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Save Part";
+            }
+        });
+
+        // B. RESTOCK SHIPMENT
+        document.getElementById('btnSubmitRestock').addEventListener('click', async () => {
+            const id = document.getElementById('restockProdId').value;
+            const qty = parseInt(document.getElementById('restockQty').value);
+            const cost = parseFloat(document.getElementById('restockCost').value);
+
+            if(!id || isNaN(qty) || isNaN(cost) || qty < 1) { alert("Check fields"); return; }
+
+            const product = allProducts.find(p => p.id === id);
+            const newTotalStock = product.stock + qty;
+            
+            // Calculate new average supply cost
+            const oldTotalValue = (product.supplyPrice || 0) * product.stock;
+            const newShipmentValue = cost * qty;
+            const newAvgCost = (oldTotalValue + newShipmentValue) / newTotalStock;
+
+            try {
+                await updateDoc(doc(db, "products", id), {
+                    stock: newTotalStock,
+                    supplyPrice: newAvgCost
+                });
+                alert("Stock Updated Successfully!");
+                bootstrap.Modal.getInstance(document.getElementById('restockModal')).hide();
+            } catch(e) { alert(e.message); }
+        });
+
+        // C. UPDATE PART DETAILS
+        document.getElementById('btnUpdateProduct').addEventListener('click', async () => {
+            const btn = document.getElementById('btnUpdateProduct');
+            
+            const id = document.getElementById('editProdId').value;
+            const name = document.getElementById('editProdName').value;
+            const oem = document.getElementById('editProdOEM').value;
+            const compat = document.getElementById('editProdCompat').value;
+            const price = parseFloat(document.getElementById('editProdPrice').value);
+            const category = document.getElementById('editProdCategory').value;
+            const manualStock = parseInt(document.getElementById('editProdStock').value);
+
+            if(!name || isNaN(price) || isNaN(manualStock)) { alert("Check required fields."); return; }
+
+            btn.disabled = true;
+            btn.innerText = "Updating...";
+
+            const fileInput = document.getElementById('editProdImgFile');
+
+            try {
+                let updateData = { name, oem, compat, price, category, stock: manualStock };
+
+                if (fileInput.files[0]) {
+                    updateData.image = await compressImage(fileInput.files[0]);
+                }
+
+                await updateDoc(doc(db, "products", id), updateData);
+                alert("Details Updated!");
+                bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+            } catch(e) { 
+                alert("Error: " + e.message); 
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Update Details";
+            }
+        });
+
+        // --- MODAL OPENERS ---
+        function openRestockModal(item) {
+            document.getElementById('restockProdId').value = item.id;
+            document.getElementById('restockProdName').innerText = "Restock: " + item.name;
+            document.getElementById('restockCost').value = item.supplyPrice; 
+            document.getElementById('restockQty').value = "";
+            new bootstrap.Modal(document.getElementById('restockModal')).show();
+        }
+
+        function openEditModal(item) {
+            document.getElementById('editProdId').value = item.id;
+            document.getElementById('editProdName').value = item.name;
+            document.getElementById('editProdOEM').value = item.oem || "";
+            document.getElementById('editProdCompat').value = item.compat || "";
+            document.getElementById('editProdPrice').value = item.price;
+            document.getElementById('editProdCategory').value = item.category;
+            document.getElementById('editProdStock').value = item.stock;
+
+            const preview = document.getElementById('editImgPreview');
+            document.getElementById('editProdImgFile').value = "";
+            if(item.image) {
+                preview.src = item.image;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+            
+            new bootstrap.Modal(document.getElementById('editProductModal')).show();
+        }
+    </script>
+</body>
+</html>
