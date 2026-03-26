@@ -14,11 +14,9 @@
         h1 { color: #d32f2f; margin-bottom: 0.5rem; font-weight: bold; }
         p { color: #666; margin-bottom: 2rem; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; outline: none; }
-        input:focus { border-color: #d32f2f; }
         button { width: 100%; padding: 12px; background: #d32f2f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; margin-top: 10px; }
         button:hover { background: #b71c1c; }
-        #message { margin-top: 15px; font-size: 0.9rem; min-height: 20px; }
-        .loader { color: #666; display: none; margin-top: 10px; }
+        #message { margin-top: 15px; font-size: 0.9rem; min-height: 20px; color: red; }
     </style>
 </head>
 <body>
@@ -26,32 +24,28 @@
 <div class="login-card">
     <h1>CAR-XPERT</h1>
     <p>Auto Supply Inventory System</p>
-    
     <div id="login-ui">
         <input type="text" id="username" placeholder="Username (e.g. autosupply)">
         <input type="password" id="password" placeholder="Password">
-        <button id="loginBtn" onclick="handleLogin()">Login to System</button>
+        <button onclick="handleLogin()">Login to System</button>
     </div>
-
-    <div id="loader" class="loader">Authenticating... Please wait.</div>
     <div id="message"></div>
 </div>
 
 <script>
-    // 1. CAR-XPERT FIREBASE CONFIG
+    // 1. FIREBASE CONFIG
     const firebaseConfig = {
         apiKey: "AIzaSyD81sF9ClxA_HKRaEkmCSyHXXRCHR1efkk",
         authDomain: "car-xpert-76d1b.firebaseapp.com",
         projectId: "car-xpert-76d1b",
         storageBucket: "car-xpert-76d1b.firebasestorage.app",
         messagingSenderId: "180376885101",
-        appId: "1:180376885101:web:0cdfffab3fe965e1722c64",
-        measurementId: "G-7E0D6YT43R"
+        appId: "1:180376885101:web:0cdfffab3fe965e1722c64"
     };
     firebase.initializeApp(firebaseConfig);
 
-    // 2. YOUR NEW EMAILJS KEYS
-    const SERVICE_ID = "service_yjc1cgi"; 
+    // 2. UPDATED EMAILJS KEYS (LATEST SERVICE ID)
+    const SERVICE_ID = "service_v82x05e"; 
     const TEMPLATE_ID = "template_d067t8g"; 
     const PUBLIC_KEY = "gS2Tda4tn4Y0PdgZ1";
 
@@ -61,58 +55,37 @@
         const user = document.getElementById('username').value.trim();
         const pass = document.getElementById('password').value;
         const msg = document.getElementById('message');
-        const loader = document.getElementById('loader');
-        const loginUI = document.getElementById('login-ui');
 
         if (!user || !pass) {
-            msg.style.color = "red";
             msg.innerText = "Please enter both fields.";
             return;
         }
 
-        // Combine username with business domain
         const fullEmail = user.includes('@') ? user : user + "@carxpert.com"; 
-
-        // UI Feedback
-        msg.innerText = "";
-        loginUI.style.display = "none";
-        loader.style.display = "block";
+        msg.style.color = "blue";
+        msg.innerText = "Authenticating...";
 
         try {
-            // FIREBASE AUTHENTICATION
-            const userCredential = await firebase.auth().signInWithEmailAndPassword(fullEmail, pass);
+            // FIREBASE LOGIN
+            await firebase.auth().signInWithEmailAndPassword(fullEmail, pass);
             
             // EMAIL NOTIFICATION
-            await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
-                user_name: user,
-                login_time: new Date().toLocaleString(),
-                system_name: "CAR-XPERT AUTO SUPPLY"
-            });
+            try {
+                await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+                    user_name: user,
+                    login_time: new Date().toLocaleString(),
+                    system_name: "CAR-XPERT AUTO SUPPLY"
+                });
+            } catch (e) { console.error("Notification failed, but entering system...", e); }
 
-            // REDIRECT TO HOME
             window.location.href = "home.html"; 
 
         } catch (error) {
-            console.error(error);
-            loginUI.style.display = "block";
-            loader.style.display = "none";
             msg.style.color = "red";
-            
-            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                msg.innerText = "Invalid username or password.";
-            } else {
-                msg.innerText = "Error: " + error.message;
-            }
+            msg.innerText = "Login Failed: Check username or password.";
+            console.error(error);
         }
     }
-
-    // Allow pressing "Enter" to login
-    document.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            handleLogin();
-        }
-    });
 </script>
-
 </body>
 </html>
