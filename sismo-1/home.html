@@ -104,3 +104,84 @@
     </div>
 
     <script type="module">
+        import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD81sF9ClxA_HKRaEkmCSyHXXRCHR1efkk",
+            authDomain: "car-xpert-76d1b.firebaseapp.com",
+            projectId: "car-xpert-76d1b",
+            storageBucket: "car-xpert-76d1b.firebasestorage.app",
+            messagingSenderId: "180376885101",
+            appId: "1:180376885101:web:0cdfffab3fe965e1722c64"
+        };
+
+        const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- CONFIGURATION ---
+        const DAILY_TARGET = 15000; 
+
+        // --- REAL-TIME LISTENER ---
+        const salesCol = collection(db, "sales");
+        
+        onSnapshot(salesCol, (snapshot) => {
+            let todayTotal = 0;
+            const todayStr = new Date().toDateString(); 
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.date && data.date.toDate) {
+                    const saleDate = data.date.toDate().toDateString();
+                    if (saleDate === todayStr) {
+                        todayTotal += data.total;
+                    }
+                }
+            });
+
+            updateProgressUI(todayTotal);
+        });
+
+        function updateProgressUI(currentAmount) {
+            const targetElement = document.getElementById('targetText');
+            const barElement = document.getElementById('progressBar');
+
+            let percentage = (currentAmount / DAILY_TARGET) * 100;
+            if (percentage > 100) percentage = 100;
+
+            targetElement.innerHTML = `₱${currentAmount.toLocaleString()} / ₱${DAILY_TARGET.toLocaleString()}`;
+            barElement.style.width = percentage + "%";
+
+            if (percentage >= 100) {
+                barElement.className = "progress-bar bg-success"; 
+                barElement.innerText = "Target Reached! 🎉";
+            } else if (percentage >= 50) {
+                barElement.className = "progress-bar bg-warning text-dark"; 
+                barElement.innerText = Math.round(percentage) + "%";
+            } else {
+                barElement.className = "progress-bar bg-danger"; 
+                barElement.innerText = Math.round(percentage) + "%";
+            }
+        }
+    </script>
+
+    <button class="btn btn-dark shadow" onclick="document.getElementById('bgPicker').click()" style="position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; z-index: 9999;" title="Change Background">
+        <i class="bi bi-palette-fill"></i>
+    </button>
+    <input type="color" id="bgPicker" style="visibility: hidden; position: fixed; bottom: 30px; right: 30px;">
+
+    <script>
+        const picker = document.getElementById('bgPicker');
+        const savedColor = localStorage.getItem('carxpert_bg_color');
+        if (savedColor) {
+            applyBgColor(savedColor);
+            picker.value = savedColor;
+        }
+        picker.addEventListener('input', (e) => {
+            const color = e.target.value;
+            applyBgColor(color);
+            localStorage.setItem('carxpert_bg_color', color);
+        });
+    </script>
+</body>
+</html>
