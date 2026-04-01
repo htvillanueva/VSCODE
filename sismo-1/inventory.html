@@ -651,7 +651,7 @@
         }
 
         // ══════════════════════════════════════════════════════
-        // 4A. SAVE NEW PART 
+        // 4A. SAVE NEW PART (Fixed Modal Closing)
         // ══════════════════════════════════════════════════════
         document.getElementById('btnSaveProduct').addEventListener('click', async () => {
             const btn = document.getElementById('btnSaveProduct');
@@ -669,34 +669,30 @@
                 alert("Please fill in Name, Supply Cost, and Stock."); return;
             }
 
-            btn.disabled = true; btn.innerText = "Saving…";
+            btn.disabled = true; btn.innerText = "Saving...";
 
             const fileInput = document.getElementById('prodImgFile');
             let finalImage  = "";
 
             try {
                 if (fileInput.files[0]) finalImage = await compressImage(fileInput.files[0]);
-
                 const compatTags = parseCompatTags(compatRaw);
 
                 await addDoc(collection(db, "products"), {
-                    name,
-                    oem,
-                    compat:         compatRaw,      
-                    compatTags,                     
-                    condition,                      
-                    supplyPrice,
-                    price,                          // auto-calculated retail price
-                    stock,
-                    category,
-                    image:     finalImage,
-                    createdAt: new Date()
+                    name, oem, compat: compatRaw, compatTags, condition, supplyPrice, price, stock, category,
+                    image: finalImage, createdAt: new Date()
                 });
 
-                alert("✅ Auto Part Added Successfully!");
-                bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+                // ★ THE FIX: Safer way to close the modal
+                const modalEl = document.getElementById('addProductModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modalInstance.hide();
+                
                 document.getElementById('addProductForm').reset();
                 document.getElementById('addImgPreview').style.display = 'none';
+                
+                // Show alert AFTER the window closes
+                setTimeout(() => alert("✅ Auto Part Added Successfully!"), 300);
 
             } catch (e) {
                 alert("Error: " + e.message);
@@ -706,7 +702,7 @@
         });
 
         // ══════════════════════════════════════════════════════
-        // 4B. RESTOCK SHIPMENT
+        // 4B. RESTOCK SHIPMENT (Fixed Modal Closing)
         // ══════════════════════════════════════════════════════
         document.getElementById('btnSubmitRestock').addEventListener('click', async () => {
             const id   = document.getElementById('restockProdId').value;
@@ -719,8 +715,6 @@
             const newTotalStock = product.stock + qty;
             const oldValue     = (product.supplyPrice || 0) * product.stock;
             const newAvgCost   = (oldValue + cost * qty) / newTotalStock;
-            
-            // Auto-calculate new Retail Price based on the newly averaged supply cost
             const newRetailPrice = newAvgCost * 1.35; 
 
             try {
@@ -729,13 +723,18 @@
                     supplyPrice: newAvgCost,
                     price:       newRetailPrice
                 });
-                alert("✅ Stock Updated Successfully!");
-                bootstrap.Modal.getInstance(document.getElementById('restockModal')).hide();
+                
+                // ★ THE FIX
+                const restockEl = document.getElementById('restockModal');
+                const restockInstance = bootstrap.Modal.getInstance(restockEl) || new bootstrap.Modal(restockEl);
+                restockInstance.hide();
+                
+                setTimeout(() => alert("✅ Stock Updated Successfully!"), 300);
             } catch (e) { alert(e.message); }
         });
 
         // ══════════════════════════════════════════════════════
-        // 4C. UPDATE PART DETAILS
+        // 4C. UPDATE PART DETAILS (Fixed Modal Closing)
         // ══════════════════════════════════════════════════════
         document.getElementById('btnUpdateProduct').addEventListener('click', async () => {
             const btn = document.getElementById('btnUpdateProduct');
@@ -752,34 +751,22 @@
 
             if (!name || isNaN(supplyPrice) || isNaN(manualStock)) { alert("Check required fields."); return; }
 
-            btn.disabled = true; btn.innerText = "Updating…";
-
+            btn.disabled = true; btn.innerText = "Updating...";
             const fileInput = document.getElementById('editProdImgFile');
 
             try {
                 const compatTags = parseCompatTags(compatRaw);
+                let updateData = { name, oem, compat: compatRaw, compatTags, condition, supplyPrice, price, category, stock: manualStock };
 
-                let updateData = {
-                    name,
-                    oem,
-                    compat:         compatRaw,      
-                    compatTags,                     
-                    condition,                      
-                    supplyPrice,
-                    price,                          // auto-calculated retail
-                    category,
-                    stock:    manualStock
-                };
-
-                if (fileInput.files[0]) {
-                    updateData.image = await compressImage(fileInput.files[0]);
-                }
-
+                if (fileInput.files[0]) updateData.image = await compressImage(fileInput.files[0]);
                 await updateDoc(doc(db, "products", id), updateData);
 
-                alert("✅ Details Updated!");
-                bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+                // ★ THE FIX
+                const editEl = document.getElementById('editProductModal');
+                const editInstance = bootstrap.Modal.getInstance(editEl) || new bootstrap.Modal(editEl);
+                editInstance.hide();
 
+                setTimeout(() => alert("✅ Details Updated!"), 300);
             } catch (e) {
                 alert("Error: " + e.message);
             } finally {
@@ -795,7 +782,10 @@
             document.getElementById('restockProdName').innerText = "Restock: " + item.name;
             document.getElementById('restockCost').value   = item.supplyPrice || 0;
             document.getElementById('restockQty').value    = "";
-            new bootstrap.Modal(document.getElementById('restockModal')).show();
+            
+            const restockEl = document.getElementById('restockModal');
+            const restockInstance = bootstrap.Modal.getInstance(restockEl) || new bootstrap.Modal(restockEl);
+            restockInstance.show();
         }
 
         function openEditModal(item) {
@@ -805,10 +795,8 @@
             document.getElementById('editProdCompat').value      = item.compat || (item.compatTags || []).join(', '); 
             document.getElementById('editProdCondition').value   = item.condition || 'Brand New';  
             
-            // Fill Supply Cost and Auto-Calculate Retail
             document.getElementById('editProdSupplyPrice').value = item.supplyPrice || 0;
             document.getElementById('editProdPrice').value       = item.price || 0;
-            
             document.getElementById('editProdCategory').value    = item.category;
             document.getElementById('editProdStock').value       = item.stock;
 
@@ -817,9 +805,10 @@
             if (item.image) { preview.src = item.image; preview.style.display = 'block'; }
             else            { preview.style.display = 'none'; }
 
-            new bootstrap.Modal(document.getElementById('editProductModal')).show();
+            const editEl = document.getElementById('editProductModal');
+            const editInstance = bootstrap.Modal.getInstance(editEl) || new bootstrap.Modal(editEl);
+            editInstance.show();
         }
-
     </script>
 </body>
 </html>
