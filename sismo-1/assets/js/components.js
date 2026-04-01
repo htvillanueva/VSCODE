@@ -1,5 +1,5 @@
 /**
- * SISMO Reusable Components
+ * CAR-XPERT Reusable Components
  */
 
 // ─── Inject shared styles once ───────────────────────────────────────────────
@@ -76,14 +76,14 @@
 
 // ─── Page Header ─────────────────────────────────────────────────────────────
 /**
- * @param {string} badge      – small badge beside logo (page label)
- * @param {string} siteTitle  – bold text beside logo (home page only, e.g. "SISMO")
- * @param {string} rightHtml  – content for the right side
+ * @param {string} badge     – small badge beside logo (page label)
+ * @param {string} siteTitle – bold text beside logo (home page only)
+ * @param {string} rightHtml – content for the right side
  * @param {string} containerClass
  */
 function renderPageHeader({ badge = '', siteTitle = '', rightHtml = '', containerClass = 'container-fluid px-3 pt-3 pb-2 mb-2' } = {}) {
     const siteTitleEl = siteTitle
-        ? `<span class="fw-bold ms-2" style="font-size:1.15rem;letter-spacing:.03em;">${siteTitle}</span>`
+        ? `<a href="home.html" class="text-dark text-decoration-none fw-bold ms-1" style="font-size:1.15rem;letter-spacing:.03em;">${siteTitle}</a>`
         : '';
     const badgeEl = badge
         ? `<span class="badge bg-secondary fs-6 ms-2">${badge}</span>`
@@ -92,9 +92,6 @@ function renderPageHeader({ badge = '', siteTitle = '', rightHtml = '', containe
         <div class="${containerClass}">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
-                    <a href="home.html">
-                        <img id="sismo-logo" src="assets/img/logo_label.png" alt="SISMO Logo" style="height: 30px;">
-                    </a>
                     ${siteTitleEl}${badgeEl}
                 </div>
                 <div>${rightHtml}</div>
@@ -144,29 +141,19 @@ function renderMobileBottomNav(buttons) {
  * Applies a background color to <body> and automatically switches
  * text on the page to white whenever the color is perceived as dark
  * (relative luminance < 0.35, per WCAG formula).
- *
- * Elements made white when dark: body text, headings, labels, small/muted text,
- * page-header hr, bottom-nav labels, and Bootstrap text-secondary / text-muted.
- *
- * @param {string} hex – 6-digit hex color, e.g. "#1a2b3c"
  */
 (function injectDarkBgStyles() {
     if (document.getElementById('sismo-darkbg-styles')) return;
     const s = document.createElement('style');
     s.id = 'sismo-darkbg-styles';
-    // Containers that keep their own light background — text inside them must NOT be forced white.
-    // Also excludes any element inside a Bootstrap bg-* utility container (bg-light, bg-white, bg-dark, etc.)
-    // and the main POS container (which has its own CSS background: white) so those sections are
-    // unaffected by the body background change.
     const _exc = ':not(.card *):not(.login-card *):not(.table *):not(.modal-content *):not(.offcanvas *):not(.dropdown-menu *):not(.sismo-slide-panel *):not(.sismo-bottom-nav *):not([class*="bg-"] *):not(.pos-container *)';
     s.textContent = `
-        /* Only elements that sit directly on the dark body (outside any light-bg container) */
         body.sismo-dark-bg :is(h1,h2,h3,h4,h5,h6,p,label,small,
             .text-muted,.text-secondary,.text-dark,
             .form-label,.form-text,.fw-bold,.fw-semibold)${_exc},
         body.sismo-dark-bg span:not(.badge)${_exc},
         body.sismo-dark-bg button:not(.btn-primary):not(.btn-dark):not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-info):not(.filter-btn.active)${_exc},
-        body.sismo-dark-bg a.btn:not(.btn-primary):not(.btn-dark):not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-info)${_exc} {
+        body.sismo-dark-bg a:not(.btn-primary):not(.btn-dark):not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-info)${_exc} {
             color: #ffffff !important;
         }
         body.sismo-dark-bg button:not(.btn-primary):not(.btn-dark):not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-info):not(.filter-btn.active)${_exc},
@@ -180,7 +167,6 @@ function renderMobileBottomNav(buttons) {
 })();
 
 function _hexLuminance(hex) {
-    // Strip leading #
     hex = hex.replace(/^#/, '');
     if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
     const r = parseInt(hex.slice(0, 2), 16) / 255;
@@ -194,33 +180,19 @@ function applyBgColor(hex) {
     document.body.style.backgroundColor = hex;
     const isDark = _hexLuminance(hex) < 0.35;
     document.body.classList.toggle('sismo-dark-bg', isDark);
-    const logo = document.getElementById('sismo-logo');
-    if (logo) logo.src = isDark
-        ? 'assets/img/ogo_label_bgdark.png'
-        : 'assets/img/logo_label.png';
 }
 
 // ─── Slide Panel Toggle Factory ───────────────────────────────────────────────
-/**
- * Creates a toggle function for a shared slide panel.
- * Applies initial state immediately (no animation on load).
- * @param {string}  bodyId    – id of the panel body element
- * @param {string}  arrowId   – id of the chevron icon element
- * @param {string|null} navBtnId – id of the bottom nav button to sync (or null)
- * @param {boolean} startOpen – whether the panel starts open (default: false)
- * @returns {Function} toggle() – call to open/close the panel
- */
 function makeSlidePanelToggle(bodyId, arrowId, navBtnId = null, startOpen = false) {
     let isOpen = startOpen;
     const body  = document.getElementById(bodyId);
     const arrow = document.getElementById(arrowId);
 
-    // Set initial state without CSS transition firing
     body.style.transition  = 'none';
     arrow.style.transition = 'none';
     body.classList.toggle('collapsed', !isOpen);
     arrow.classList.toggle('collapsed', !isOpen);
-    // Re-enable transitions after first frame
+    
     requestAnimationFrame(() => {
         body.style.transition  = '';
         arrow.style.transition = '';
