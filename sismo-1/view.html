@@ -11,28 +11,53 @@
     <script src="assets/js/components.js"></script>
 
     <style>
-        /* product area needs bottom padding for fixed mobile panels */
-        @media (max-width: 767.98px) {
-            .product-area { padding-bottom: 180px; }
-        }
+        @media (max-width: 767.98px) { .product-area { padding-bottom: 180px; } }
         .text-brand { color: #dc3545 !important; }
-        .bg-brand { background-color: #dc3545 !important; color: white; }
+        .bg-brand   { background-color: #dc3545 !important; color: white; }
+
+        /* ── Condition badges on cards ── */
+        .cond-badge {
+            font-size: .6rem; font-weight: 700; padding: 1px 5px;
+            border-radius: 3px; letter-spacing: .3px;
+        }
+        .cond-badge.new     { background:#d1e7dd; color:#0f5132; }
+        .cond-badge.surplus { background:#ffe5d0; color:#7d3900; }
+
+        /* ── Truck compat micro-tags on cards ── */
+        .card-compat-tag {
+            display: inline-block; font-size:.58rem; background:#fff3cd;
+            color:#664d03; border:1px solid #ffc107; border-radius:3px;
+            padding:0 4px; margin:1px 1px 0 0; line-height:1.5;
+        }
+
+        /* ── Customer type toggle ── */
+        #customerTypeToggle .btn { font-size: .78rem; padding: 3px 10px; }
+        #customerTypeToggle .btn.active-retail    { background:#dc3545; color:#fff; border-color:#dc3545; }
+        #customerTypeToggle .btn.active-wholesale { background:#0d6efd; color:#fff; border-color:#0d6efd; }
+
+        /* ── Wholesale price tag in cart row ── */
+        .ws-tag {
+            font-size:.65rem; background:#cfe2ff; color:#084298;
+            border-radius:3px; padding:0 4px; font-weight:700;
+        }
     </style>
 </head>
 <body>
 
-    <div id="sismo-guard" style="position:fixed;inset:0;background:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;"><div class="spinner-border text-danger" role="status"></div></div>
+    <div id="sismo-guard" style="position:fixed;inset:0;background:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;">
+        <div class="spinner-border text-danger" role="status"></div>
+    </div>
+
+    <!-- ── AUTH GUARD ── -->
     <script type="module">
         import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        
-        // NEW CAR-XPERT KEYS
-        const _cfg = { 
-            apiKey: "AIzaSyD81sF9ClxA_HKRaEkmCSyHXXRCHR1efkk", 
-            authDomain: "car-xpert-76d1b.firebaseapp.com", 
-            projectId: "car-xpert-76d1b", 
-            storageBucket: "car-xpert-76d1b.firebasestorage.app", 
-            messagingSenderId: "180376885101", 
+        const _cfg = {
+            apiKey: "AIzaSyD81sF9ClxA_HKRaEkmCSyHXXRCHR1efkk",
+            authDomain: "car-xpert-76d1b.firebaseapp.com",
+            projectId: "car-xpert-76d1b",
+            storageBucket: "car-xpert-76d1b.firebasestorage.app",
+            messagingSenderId: "180376885101",
             appId: "1:180376885101:web:0cdfffab3fe965e1722c64",
             measurementId: "G-7E0D6YT43R"
         };
@@ -44,6 +69,7 @@
         window._sismoSignOut = async () => { await signOut(getAuth(_app)); window.location.replace('index.html'); };
     </script>
 
+    <!-- ── PAGE HEADER ── -->
     <div id="page-header"></div>
     <script>
         renderPageHeader({
@@ -53,23 +79,44 @@
         });
     </script>
 
+    <!-- ── SEARCH BAR ── -->
     <div id="search-bar-container" class="d-none border-bottom bg-white px-3 py-2">
         <div class="input-group">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" id="searchInput" class="form-control" placeholder="Type part name or OEM...">
+            <input type="text" id="searchInput" class="form-control"
+                   placeholder="Search by name, OEM, or truck (e.g. 'Isuzu Elf', '4D32')…">
             <button class="btn btn-outline-secondary" id="btnCloseSearch">Close</button>
+        </div>
+        <!-- ★ Condition filter pills in search bar -->
+        <div class="d-flex gap-2 mt-2 align-items-center">
+            <small class="text-muted">Filter:</small>
+            <span class="badge bg-dark search-cond-pill" id="spillAll"    style="cursor:pointer;" onclick="setPosCondFilter('All')">All</span>
+            <span class="badge bg-success search-cond-pill" id="spillNew" style="cursor:pointer;opacity:.5;" onclick="setPosCondFilter('Brand New')">🟢 Brand New</span>
+            <span class="badge search-cond-pill" id="spillSurplus" style="cursor:pointer;background:#fd7e14;opacity:.5;" onclick="setPosCondFilter('Surplus')">🟠 Surplus</span>
         </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════
+         POS WRAPPER
+    ══════════════════════════════════════════════ -->
     <div class="container-fluid px-1 pt-0 pb-3 pos-wrapper">
         <div class="row g-0 pos-container">
+
+            <!-- ── ORDER LIST PANEL (desktop) ── -->
             <div class="col-md-3 order-list-panel d-none d-md-flex flex-column">
-                <div class="p-3 bg-dark text-white fw-bold d-flex justify-content-between">
+                <div class="p-3 bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
                     <span>ORDER LIST</span>
                     <span id="item-count-badge" class="badge bg-danger">0</span>
                 </div>
-                
-                <div class="order-items flex-grow-1" id="cartContainer" style="overflow-y: auto;">
+
+                <!-- ★ Customer Type Toggle -->
+                <div id="customerTypeToggle" class="px-3 py-2 border-bottom bg-white d-flex gap-2 align-items-center">
+                    <small class="text-muted fw-bold me-1">Customer:</small>
+                    <button id="btnRetail"    class="btn btn-sm active-retail"    onclick="setCustomerType('Retail')">🛒 Retail</button>
+                    <button id="btnWholesale" class="btn btn-sm btn-outline-primary" onclick="setCustomerType('Wholesale')">📦 Wholesale</button>
+                </div>
+
+                <div class="order-items flex-grow-1" id="cartContainer" style="overflow-y:auto;">
                     <div class="text-center text-muted mt-5">
                         <i class="bi bi-basket display-4"></i>
                         <p class="mt-2">No Items Yet</p>
@@ -81,29 +128,27 @@
                         <span class="fw-bold fs-5">TOTAL AMOUNT:</span>
                         <span class="fw-bold text-danger fs-4" id="totalPriceDisplay">₱0.00</span>
                     </div>
-
                     <div class="mb-3">
                         <div class="input-group mb-2">
                             <span class="input-group-text fw-bold bg-white"><i class="bi bi-cash"></i></span>
-                            <input type="text" inputmode="decimal" id="amountPaidInput" class="form-control fw-bold fs-5 text-end" placeholder="0.00" autocomplete="off">
+                            <input type="text" inputmode="decimal" id="amountPaidInput"
+                                   class="form-control fw-bold fs-5 text-end" placeholder="0.00" autocomplete="off">
                         </div>
                         <div class="d-flex justify-content-between align-items-center px-1">
                             <span class="small fw-bold text-muted">CHANGE:</span>
                             <span class="fw-bold fs-4 text-success" id="changeDisplay">₱0.00</span>
                         </div>
                     </div>
-
                     <button id="btnPay" class="btn btn-danger w-100 fw-bold py-3 fs-5 shadow-sm">PAYMENT</button>
                 </div>
             </div>
 
+            <!-- ── PRODUCT GRID ── -->
             <div class="col-md-7 product-area">
-                
                 <div class="category-wrapper">
                     <button class="scroll-arrow left" onclick="scrollCategories(-200)"><i class="bi bi-chevron-left"></i></button>
-                    
                     <div class="category-scroll" id="catScrollContainer">
-                        <button class="btn btn-dark cat-btn" onclick="filterCategory('All')">All Parts</button>
+                        <button class="btn btn-dark cat-btn"         onclick="filterCategory('All')">All Parts</button>
                         <button class="btn btn-outline-dark cat-btn" onclick="filterCategory('Engine Parts')">Engine Parts</button>
                         <button class="btn btn-outline-dark cat-btn" onclick="filterCategory('Fluids & Oils')">Fluids & Oils</button>
                         <button class="btn btn-outline-dark cat-btn" onclick="filterCategory('Brakes & Suspension')">Brakes & Suspension</button>
@@ -112,20 +157,19 @@
                         <button class="btn btn-outline-dark cat-btn" onclick="filterCategory('Tools')">Tools</button>
                         <button class="btn btn-outline-dark cat-btn" onclick="filterCategory('Others')">Others</button>
                     </div>
-
                     <button class="scroll-arrow right" onclick="scrollCategories(200)"><i class="bi bi-chevron-right"></i></button>
                 </div>
 
                 <h5 class="mb-3 text-muted" id="grid-title">Select Parts</h5>
-                
                 <div class="row g-2" id="productGrid">
                     <div class="text-center py-5">
                         <div class="spinner-border text-danger"></div>
-                        <p>Loading Inventory...</p>
+                        <p>Loading Inventory…</p>
                     </div>
                 </div>
             </div>
 
+            <!-- ── ACTION PANEL (desktop) ── -->
             <div class="col-md-2 action-panel d-none d-md-flex flex-column">
                 <button class="btn btn-light action-btn text-primary" onclick="toggleSearch()">
                     <i class="bi bi-search"></i> Search
@@ -140,140 +184,260 @@
         </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════
+         MAIN POS LOGIC
+    ══════════════════════════════════════════════ -->
     <script type="module">
         import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import {
+            getFirestore, collection, onSnapshot,
+            addDoc, updateDoc, doc, getDoc
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const app = getApps()[0];
-        const db = getFirestore(app);
+        const db  = getFirestore(app);
 
-        // --- GLOBAL VARIABLES ---
-        let allProducts = [];
-        let cart = [];
-        let currentCustomer = "Walk-in";
+        // ── State ──────────────────────────────────────────────
+        let allProducts        = [];
+        let cart               = [];
+        let currentCustomer    = "Walk-in";
+        let customerType       = "Retail";       // ★ "Retail" | "Wholesale"
+        let posCondFilter      = "All";          // ★ condition filter in POS search
+        let activeCategoryFilter = "All";
 
-        // --- 1. LOAD PRODUCTS ---
+        // ══════════════════════════════════════════════════════
+        // ★ SMART SEARCH — same TRUCK_MAP as inventory
+        // ══════════════════════════════════════════════════════
+        const TRUCK_MAP = {
+            'isuzu elf':         ['4hf1','4hg1','4he1','4jb1','4bc2','4be1','4bd1'],
+            'isuzu forward':     ['6hh1','6hk1','6sd1','6bg1'],
+            'isuzu giga':        ['6wf1','6wg1','6sd1'],
+            'isuzu npr':         ['4hf1','4he1','4jj1'],
+            'isuzu nqr':         ['4hk1','4he1'],
+            'isuzu fsr':         ['6hh1','6bg1'],
+            'fuso canter':       ['4d32','4d33','4d34','4d35','4m50'],
+            'fuso fighter':      ['6d16','6d17','6m60'],
+            'fuso rosa':         ['4d33','4d34'],
+            'mitsubishi canter': ['4d32','4d33','4d34','4d35','4m50'],
+            'hino ranger':       ['j08c','j08e','ef750','fd','fe6'],
+            'hino dutro':        ['n04c','s05c'],
+            'hino 500':          ['j08c','j08e'],
+            'hino 300':          ['n04c'],
+            'nissan condor':     ['fe6','fd6','rf8'],
+            'ud condor':         ['fe6','fd6','rf8'],
+            'nissan diesel':     ['fe6','fd6'],
+            'toyota dyna':       ['14b','15b','bu'],
+            'toyota coaster':    ['1hz','1hd'],
+        };
+
+        function smartMatch(item, rawQuery) {
+            if (!rawQuery) return true;
+            const q = rawQuery.toLowerCase().trim();
+            const expanded = new Set([q]);
+            for (const [model, engines] of Object.entries(TRUCK_MAP)) {
+                if (model.includes(q) || q.includes(model)) engines.forEach(e => expanded.add(e));
+                if (engines.some(e => e === q)) expanded.add(model);
+            }
+            const hay = [
+                item.name || '', item.oem || '', item.category || '',
+                item.condition || '',
+                ...(item.compatTags || [])
+            ].join(' ').toLowerCase();
+            return [...expanded].some(t => hay.includes(t));
+        }
+
+        // ── Customer Type ──────────────────────────────────────
+        window.setCustomerType = function(type) {
+            customerType = type;
+            document.getElementById('btnRetail').className    =
+                'btn btn-sm ' + (type === 'Retail'    ? 'active-retail'       : 'btn-outline-danger');
+            document.getElementById('btnWholesale').className =
+                'btn btn-sm ' + (type === 'Wholesale' ? 'active-wholesale'     : 'btn-outline-primary');
+            // Re-price items already in cart
+            cart.forEach(item => {
+                item.price = resolvePrice(item._product, type);
+            });
+            updateCartUI();
+        };
+
+        /** ★ Returns the correct price based on customer type */
+        function resolvePrice(product, type) {
+            if (type === 'Wholesale' && product.wholesalePrice && product.wholesalePrice > 0) {
+                return product.wholesalePrice;
+            }
+            return product.price; // retail
+        }
+
+        // ── Condition filter for POS search ───────────────────
+        window.setPosCondFilter = function(cond) {
+            posCondFilter = cond;
+            ['spillAll','spillNew','spillSurplus'].forEach(id =>
+                document.getElementById(id).style.opacity = '0.45');
+            const map = { 'All':'spillAll', 'Brand New':'spillNew', 'Surplus':'spillSurplus' };
+            document.getElementById(map[cond]).style.opacity = '1';
+            applyPosFilters();
+        };
+
+        // ══════════════════════════════════════════════════════
+        // 1. LOAD PRODUCTS
+        // ══════════════════════════════════════════════════════
         const productGrid = document.getElementById('productGrid');
-        
+
         onSnapshot(collection(db, "products"), (snapshot) => {
             allProducts = [];
-            productGrid.innerHTML = "";
-            
-            snapshot.forEach((doc) => {
-                let p = doc.data();
-                p.id = doc.id;
+            snapshot.forEach((d) => {
+                let p = d.data();
+                p.id = d.id;
+                if (!p.compatTags) {
+                    p.compatTags = (p.compat || '').split(',').map(t => t.trim()).filter(Boolean);
+                }
                 allProducts.push(p);
             });
-
-            renderProducts(allProducts);
+            applyPosFilters();
         });
 
-        // --- 2. RENDER PRODUCTS (Simplified Logic) ---
+        // ── Combined filter: category + condition + search ─────
+        function applyPosFilters() {
+            const searchText = (document.getElementById('searchInput')?.value || '').trim();
+            let results = allProducts;
+            if (activeCategoryFilter !== 'All') {
+                results = results.filter(p => p.category === activeCategoryFilter);
+            }
+            if (posCondFilter !== 'All') {
+                results = results.filter(p => (p.condition || 'Brand New') === posCondFilter);
+            }
+            if (searchText) {
+                results = results.filter(p => smartMatch(p, searchText));
+            }
+            renderProducts(results);
+        }
+
+        // ══════════════════════════════════════════════════════
+        // 2. RENDER PRODUCT CARDS  ← condition + truck tags
+        // ══════════════════════════════════════════════════════
         window.renderProducts = function(productsToRender) {
             productGrid.innerHTML = "";
-            
-            if(productsToRender.length === 0) {
-                productGrid.innerHTML = '<p class="text-center text-muted">No parts found.</p>';
+            if (productsToRender.length === 0) {
+                productGrid.innerHTML = '<p class="text-center text-muted py-4">No parts found.</p>';
                 return;
             }
 
             productsToRender.forEach(p => {
-                let cardClass, clickAction, statusText, statusColor;
-                
-                // Only Check for Out of Stock
-                if (p.stock <= 0) {
-                    cardClass = 'product-card disabled'; clickAction = '';
-                    statusText = 'Out of Stock'; statusColor = 'text-danger fw-bold';
-                } else {
-                    cardClass = 'product-card'; clickAction = `addToCart('${p.id}')`;
-                    statusText = `${p.stock} in stock`; statusColor = 'text-success';
-                }
+                const outOfStock = p.stock <= 0;
+                const cardClass  = 'product-card' + (outOfStock ? ' disabled' : '');
+                const clickAct   = outOfStock ? '' : `addToCart('${p.id}')`;
+                const statusText = outOfStock ? 'Out of Stock' : `${p.stock} in stock`;
+                const statusCls  = outOfStock ? 'text-danger fw-bold' : 'text-success';
 
-                // IMAGE LOGIC
                 const imgSrc = p.image || "https://placehold.co/150x120?text=No+Image";
 
-                let html = `
+                // ★ Condition badge
+                const isSurplus  = (p.condition === 'Surplus');
+                const condBadge  = `<span class="cond-badge ${isSurplus ? 'surplus' : 'new'}">
+                                        ${isSurplus ? '🟠 Surplus' : '🟢 New'}
+                                    </span>`;
+
+                // ★ Truck compat tags (show max 3 to keep card compact)
+                const tags = (p.compatTags || []).slice(0, 3)
+                    .map(t => `<span class="card-compat-tag">${t}</span>`).join('');
+
+                // ★ Price shown depends on active customer type
+                const displayPrice = resolvePrice(p, customerType);
+                const hasWS = p.wholesalePrice && p.wholesalePrice > 0;
+                const priceHtml = customerType === 'Wholesale' && hasWS
+                    ? `<small class="text-primary fw-bold d-block">₱${displayPrice.toFixed(2)} <span class="ws-tag">WS</span></small>`
+                    : `<small class="text-danger fw-bold d-block">₱${displayPrice.toFixed(2)}</small>`;
+
+                productGrid.innerHTML += `
                 <div class="col-4 col-lg-3">
-                    <div class="card ${cardClass} p-2 text-center" onclick="${clickAction}">
+                    <div class="card ${cardClass} p-2 text-center" onclick="${clickAct}">
                         <div class="card-body p-1 d-flex flex-column h-100">
                             <img src="${imgSrc}" class="product-card-img" alt="${p.name}">
-                            
-                            <div class="product-title" title="${p.name}">
-                                ${p.name}
-                            </div>
-                            
+                            <div class="mb-1">${condBadge}</div>
+                            <div class="product-title" title="${p.name}">${p.name}</div>
+                            ${tags ? `<div class="mb-1">${tags}</div>` : ''}
                             <div class="mt-auto">
-                                <small class="text-danger fw-bold d-block">₱${p.price.toFixed(2)}</small>
-                                <small class="${statusColor} small">${statusText}</small>
+                                ${priceHtml}
+                                <small class="${statusCls} small">${statusText}</small>
                             </div>
                         </div>
                     </div>
                 </div>`;
-                productGrid.innerHTML += html;
             });
-        }
+        };
 
-        // --- 3. CART FUNCTIONS ---
+        // ══════════════════════════════════════════════════════
+        // 3. CART FUNCTIONS
+        // ══════════════════════════════════════════════════════
         window.addToCart = function(id) {
-            let product = allProducts.find(p => p.id === id);
-            let existingItem = cart.find(item => item.id === id);
+            const product = allProducts.find(p => p.id === id);
+            const existing = cart.find(i => i.id === id);
+            const price = resolvePrice(product, customerType);  // ★ correct tier
 
-            if (existingItem) {
-                if(existingItem.qty + 1 > product.stock) {
-                    alert("Not enough stock!");
-                    return;
-                }
-                existingItem.qty++;
+            if (existing) {
+                if (existing.qty + 1 > product.stock) { alert("Not enough stock!"); return; }
+                existing.qty++;
+                existing.price = price;  // re-sync price in case type changed
             } else {
                 cart.push({
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    stock: product.stock,
-                    image: product.image,
-                    qty: 1
+                    id:        product.id,
+                    name:      product.name,
+                    price,                          // ★ tier-aware price
+                    retailPrice:    product.price,
+                    wholesalePrice: product.wholesalePrice || 0,
+                    stock:     product.stock,
+                    image:     product.image,
+                    condition: product.condition || 'Brand New',
+                    qty:       1,
+                    _product:  product              // reference for re-pricing
                 });
             }
             updateCartUI();
-        }
+        };
 
         function updateCartUI() {
-            const container   = document.getElementById('cartContainer');
+            const container    = document.getElementById('cartContainer');
             const totalDisplay = document.getElementById('totalPriceDisplay');
-            const countBadge  = document.getElementById('item-count-badge');
-
+            const countBadge   = document.getElementById('item-count-badge');
             const _mc = document.getElementById('mobileCartContainer');
             const _mb = document.getElementById('mobile-item-count');
             const _mt = document.getElementById('mobileTotalDisplay');
 
             if (cart.length === 0) {
-                const emptyHTML = `<div class="text-center text-muted mt-5"><i class="bi bi-basket display-4"></i><p class="mt-2">No Items Yet</p></div>`;
+                const emptyHTML = `<div class="text-center text-muted mt-5">
+                    <i class="bi bi-basket display-4"></i><p class="mt-2">No Items Yet</p></div>`;
                 container.innerHTML = emptyHTML;
                 totalDisplay.innerText = "₱0.00";
                 countBadge.innerText = "0";
                 if (_mc) _mc.innerHTML = emptyHTML;
                 if (_mb) _mb.innerText = '0';
-                if (_mt) _mt.innerText = '\u20b10.00';
-                calculateChange();
-                return;
+                if (_mt) _mt.innerText = '₱0.00';
+                calculateChange(); return;
             }
 
             let grandTotal = 0, totalItems = 0;
             const rows = cart.map((item, index) => {
                 const itemTotal = item.price * item.qty;
-                grandTotal += itemTotal;
-                totalItems += item.qty;
-                const thumbSrc = item.image || "https://placehold.co/50?text=?";
+                grandTotal += itemTotal; totalItems += item.qty;
+                const thumb = item.image || "https://placehold.co/50?text=?";
+                // ★ Show WS tag if wholesale price is active
+                const isWS = customerType === 'Wholesale' && item.wholesalePrice > 0;
+                const priceLine = isWS
+                    ? `<small class="text-primary" style="font-size:.8rem;">
+                           ₱${item.price.toFixed(2)} x ${item.qty} <span class="ws-tag">WS</span>
+                       </small>`
+                    : `<small class="text-muted" style="font-size:.8rem;">₱${item.price.toFixed(2)} x ${item.qty}</small>`;
+
                 return `<div class="p-2 border-bottom bg-white mb-1">
                     <div class="d-flex align-items-center">
-                        <img src="${thumbSrc}" class="rounded me-2 shadow-sm" style="width:50px;height:50px;object-fit:cover;">
+                        <img src="${thumb}" class="rounded me-2 shadow-sm" style="width:50px;height:50px;object-fit:cover;">
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between align-items-start">
                                 <span class="fw-bold text-truncate" style="max-width:120px;" title="${item.name}">${item.name}</span>
-                                <span class="fw-bold text-danger">₱${itemTotal.toFixed(2)}</span>
+                                <span class="fw-bold ${isWS ? 'text-primary' : 'text-danger'}">₱${itemTotal.toFixed(2)}</span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mt-1">
-                                <small class="text-muted" style="font-size:0.8rem;">₱${item.price} x ${item.qty}</small>
+                                ${priceLine}
                                 <div>
                                     <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="adjustQty(${index},-1)">-</button>
                                     <button class="btn btn-sm btn-outline-success py-0 px-2" onclick="adjustQty(${index},1)">+</button>
@@ -288,59 +452,48 @@
             container.innerHTML = cartHTML;
             totalDisplay.innerText = "₱" + grandTotal.toFixed(2);
             countBadge.innerText = totalItems;
-
             if (_mc) _mc.innerHTML = cartHTML;
             if (_mb) _mb.innerText = totalItems;
             if (_mt) _mt.innerText = totalDisplay.innerText;
-
             calculateChange();
         }
 
         window.adjustQty = function(index, change) {
-            let item = cart[index];
+            const item = cart[index];
             if (change === 1) {
-                if (item.qty + 1 > item.stock) {
-                    alert("Max stock reached.");
-                    return;
-                }
+                if (item.qty + 1 > item.stock) { alert("Max stock reached."); return; }
                 item.qty++;
             } else {
                 item.qty--;
             }
             if (item.qty <= 0) cart.splice(index, 1);
             updateCartUI();
-        }
+        };
 
-        // --- CALCULATE CHANGE FUNCTION ---
         window.calculateChange = function() {
             const amountPaidInput = document.getElementById('amountPaidInput');
             const changeDisplay   = document.getElementById('changeDisplay');
             const _mcd            = document.getElementById('mobileChangeDisplay');
 
-            const total  = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            const total  = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
             const paid   = parseFloat(amountPaidInput.value) || 0;
             const change = paid - total;
 
             let text, cls;
             if (cart.length > 0 && paid > 0) {
-                if (change < 0) {
-                    text = "Insufficient";         cls = "fw-bold fs-4 text-danger";
-                } else {
-                    text = "₱" + change.toFixed(2); cls = "fw-bold fs-4 text-success";
-                }
+                text = change < 0 ? "Insufficient" : "₱" + change.toFixed(2);
+                cls  = `fw-bold fs-4 ${change < 0 ? 'text-danger' : 'text-success'}`;
             } else {
                 text = "₱0.00"; cls = "fw-bold fs-4 text-muted";
             }
-
-            changeDisplay.innerText = text;
-            changeDisplay.className = cls;
+            changeDisplay.innerText = text; changeDisplay.className = cls;
             if (_mcd) { _mcd.innerText = text; _mcd.className = cls; }
-        }
+        };
 
         function sanitiseAmountField(input) {
             let val = input.value.replace(/[^0-9.]/g, '');
-            const firstDot = val.indexOf('.');
-            if (firstDot !== -1) val = val.slice(0, firstDot + 1) + val.slice(firstDot + 1).replace(/\./g, '');
+            const fd = val.indexOf('.');
+            if (fd !== -1) val = val.slice(0, fd + 1) + val.slice(fd + 1).replace(/\./g, '');
             if (input.value !== val) input.value = val;
             return val;
         }
@@ -352,167 +505,152 @@
             calculateChange();
         });
 
-        // --- 4. ACTION BUTTONS ---
+        // ══════════════════════════════════════════════════════
+        // 4. ACTION BUTTONS
+        // ══════════════════════════════════════════════════════
         window.clearCart = function() {
-            if(confirm("Clear current order?")) {
+            if (confirm("Clear current order?")) {
                 cart = [];
                 document.getElementById('amountPaidInput').value = "";
                 const _ma = document.getElementById('mobileAmountPaid');
                 if (_ma) _ma.value = "";
                 updateCartUI();
             }
-        }
+        };
 
         window.checkStock = function() {
-            if(confirm("Go to Inventory Management? Current order will be lost.")) {
+            if (confirm("Go to Inventory? Current order will be lost."))
                 window.location.href = 'inventory.html?from=view';
-            }
-        }
+        };
 
-        // --- SCROLL FUNCTION ---
         window.scrollCategories = function(amount) {
-            const container = document.getElementById('catScrollContainer');
-            container.scrollLeft += amount;
-        }
+            document.getElementById('catScrollContainer').scrollLeft += amount;
+        };
 
         window.filterCategory = function(cat) {
+            activeCategoryFilter = cat;
             document.querySelectorAll('.cat-btn').forEach(btn => {
-                if(btn.innerText.includes(cat) || (cat === 'All' && btn.innerText.includes('All'))) {
-                    btn.classList.remove('btn-outline-dark'); btn.classList.add('btn-dark');
-                } else {
-                    btn.classList.add('btn-outline-dark'); btn.classList.remove('btn-dark');
-                }
+                const isActive = btn.innerText.includes(cat) || (cat === 'All' && btn.innerText.includes('All'));
+                btn.classList.toggle('btn-dark', isActive);
+                btn.classList.toggle('btn-outline-dark', !isActive);
             });
-
-            if(cat === 'All') renderProducts(allProducts);
-            else renderProducts(allProducts.filter(p => p.category === cat));
-        }
+            applyPosFilters();
+        };
 
         window.toggleSearch = function() {
-            const searchBar = document.getElementById('search-bar-container');
+            const bar = document.getElementById('search-bar-container');
             const mnavBtn = document.getElementById('mnavSearch');
-            const isHidden = searchBar.classList.contains('d-none');
-            searchBar.classList.toggle('d-none', !isHidden);
+            const isHidden = bar.classList.contains('d-none');
+            bar.classList.toggle('d-none', !isHidden);
             if (mnavBtn) mnavBtn.classList.toggle('active', isHidden);
             if (!isHidden) {
                 document.getElementById('searchInput').value = '';
-                renderProducts(allProducts);
+                applyPosFilters();
             } else {
                 document.getElementById('searchInput').focus();
             }
-        }
+        };
 
         document.getElementById('btnCloseSearch').addEventListener('click', toggleSearch);
 
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            let text = e.target.value.toLowerCase();
-            renderProducts(allProducts.filter(p => 
-                p.name.toLowerCase().includes(text) || 
-                (p.oem && p.oem.toLowerCase().includes(text))
-            ));
-        });
+        // ★ Smart search listener
+        document.getElementById('searchInput').addEventListener('input', applyPosFilters);
 
-        // --- 5. PAYMENT (SIMPLIFIED STOCK DEDUCTION) ---
+        // ══════════════════════════════════════════════════════
+        // 5. PAYMENT — records priceType in sales log
+        // ══════════════════════════════════════════════════════
         document.getElementById('btnPay').addEventListener('click', async () => {
             if (cart.length === 0) return alert("Cart is empty!");
-            
-            let total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
+            const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
             const amountInput = document.getElementById('amountPaidInput');
             const rawPaid = amountInput.value.trim();
 
-            if (!rawPaid) {
-                alert("Please enter the amount paid before proceeding.");
-                amountInput.focus(); return;
-            }
-            let paid = parseFloat(rawPaid);
-            if (isNaN(paid) || paid <= 0) {
-                alert("Please enter a valid amount paid.");
-                amountInput.focus(); return;
-            }
+            if (!rawPaid) { alert("Please enter the amount paid."); amountInput.focus(); return; }
+            const paid = parseFloat(rawPaid);
+            if (isNaN(paid) || paid <= 0) { alert("Enter a valid amount."); amountInput.focus(); return; }
             if (paid < total) {
-                alert(`Insufficient payment.\n\nTotal Due : ₱${total.toFixed(2)}`);
+                alert(`Insufficient payment.\n\nTotal Due: ₱${total.toFixed(2)}`);
                 amountInput.focus(); return;
             }
 
             const change = paid - total;
+            if (!confirm(`Confirm Payment\n\nCustomer : ${customerType}\nTotal    : ₱${total.toFixed(2)}\nCash     : ₱${paid.toFixed(2)}\nChange   : ₱${change.toFixed(2)}`)) return;
 
-            if (!confirm(`Confirm Payment\n\nTotal  : ₱${total.toFixed(2)}\nCash   : ₱${paid.toFixed(2)}\nChange : ₱${change.toFixed(2)}`)) return;
-
-            document.getElementById('btnPay').innerText = "Processing...";
-            document.getElementById('btnPay').disabled = true;
+            const btnPay = document.getElementById('btnPay');
+            btnPay.innerText = "Processing…"; btnPay.disabled = true;
 
             try {
-                let soldItemsLog = [];
+                // ★ Build detailed sold-items log including price tier
+                const soldItemsLog = [];
 
-                for (let cartItem of cart) {
-                    const productRef = doc(db, "products", cartItem.id);
+                for (const cartItem of cart) {
+                    const productRef  = doc(db, "products", cartItem.id);
                     const productSnap = await getDoc(productRef);
-                    
-                    if (productSnap.exists()) {
-                        let productData = productSnap.data();
-                        let currentStock = productData.stock || 0;
-                        let quantityToDeduct = cartItem.qty;
-                        let newTotalStock = currentStock - quantityToDeduct;
+                    if (!productSnap.exists()) continue;
 
-                        // Ensure stock doesn't go below 0
-                        if (newTotalStock < 0) newTotalStock = 0;
+                    const productData   = productSnap.data();
+                    const currentStock  = productData.stock || 0;
+                    const newStock      = Math.max(0, currentStock - cartItem.qty);
 
-                        // Update main stock number 
-                        await updateDoc(productRef, {
-                            stock: newTotalStock
-                        });
+                    await updateDoc(productRef, { stock: newStock });
 
-                        // Add to log (No Expiration Date appended)
-                        soldItemsLog.push(...Array(quantityToDeduct).fill(`${productData.name}`));
-                    }
+                    // ★ Log each line item with price, qty, and tier
+                    soldItemsLog.push({
+                        productId:  cartItem.id,
+                        name:       cartItem.name,
+                        condition:  cartItem.condition,
+                        priceType:  customerType,           // ★ "Retail" | "Wholesale"
+                        unitPrice:  cartItem.price,
+                        qty:        cartItem.qty,
+                        lineTotal:  parseFloat((cartItem.price * cartItem.qty).toFixed(2))
+                    });
                 }
 
+                // ★ Save transaction with full detail
                 await addDoc(collection(db, "sales"), {
-                    customer: currentCustomer,
-                    items: soldItemsLog,
-                    total: total,
-                    amountPaid: paid,
-                    change: parseFloat((paid - total).toFixed(2)),
-                    date: new Date()
+                    customer:     currentCustomer,
+                    customerType,                          // ★ "Retail" | "Wholesale"
+                    items:        soldItemsLog,
+                    total,
+                    amountPaid:   paid,
+                    change:       parseFloat(change.toFixed(2)),
+                    date:         new Date()
                 });
 
-                alert("Transaction Success!");
+                alert("✅ Transaction Successful!");
                 cart = [];
-                document.getElementById('amountPaidInput').value = "";
+                amountInput.value = "";
                 const _ma2 = document.getElementById('mobileAmountPaid');
                 if (_ma2) _ma2.value = "";
                 updateCartUI();
 
-            } catch (error) {
-                console.error(error);
-                alert("Error: " + error.message);
+            } catch (err) {
+                console.error(err);
+                alert("Error: " + err.message);
             } finally {
-                document.getElementById('btnPay').innerText = "PAYMENT";
-                document.getElementById('btnPay').disabled = false;
+                btnPay.innerText = "PAYMENT"; btnPay.disabled = false;
             }
         });
 
-        // --- 6. NAVIGATION LOGIC ---
+        // ══════════════════════════════════════════════════════
+        // 6. KEYBOARD & NAVIGATION
+        // ══════════════════════════════════════════════════════
         function handleExit() {
             if (cart.length > 0) {
-                if(confirm("Return to Home? Current order will be discarded.")) {
+                if (confirm("Return to Home? Current order will be discarded."))
                     window.location.href = 'home.html';
-                }
             } else {
                 window.location.href = 'home.html';
             }
         }
 
-        document.getElementById('btnBack').addEventListener('click', (e) => { e.preventDefault(); handleExit(); });
+        document.getElementById('btnBack').addEventListener('click', e => { e.preventDefault(); handleExit(); });
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === "Escape") {
-                handleExit();
-            }
+        document.addEventListener('keydown', e => {
+            if (e.key === "Escape") handleExit();
             if (e.key === "Enter" && window.innerWidth >= 768) {
-                const active = document.activeElement;
-                if (active && active.id === 'searchInput') return;
+                if (document.activeElement?.id === 'searchInput') return;
                 e.preventDefault();
                 document.getElementById('btnPay').click();
             }
@@ -520,6 +658,9 @@
 
     </script>
 
+    <!-- ══════════════════════════════════════════════
+         MOBILE SLIDE PANEL
+    ══════════════════════════════════════════════ -->
     <div class="sismo-slide-panel d-md-none">
         <div class="sismo-slide-panel-header bg-dark text-white" onclick="toggleMobileOrder()">
             <span>ORDER LIST</span>
@@ -529,6 +670,14 @@
             </div>
         </div>
         <div id="mobileOrderBody" class="sismo-slide-panel-body" style="display:flex;flex-direction:column;">
+
+            <!-- ★ Mobile Customer Type Toggle -->
+            <div class="px-3 py-2 border-bottom bg-white d-flex gap-2 align-items-center">
+                <small class="text-muted fw-bold me-1">Customer:</small>
+                <button id="btnRetailMobile"    class="btn btn-sm active-retail"     onclick="setCustomerType('Retail')">🛒 Retail</button>
+                <button id="btnWholesaleMobile" class="btn btn-sm btn-outline-primary" onclick="setCustomerType('Wholesale')">📦 Wholesale</button>
+            </div>
+
             <div id="mobileCartContainer" style="flex:1 1 auto;overflow-y:auto;min-height:0;">
                 <div class="text-center text-muted p-4">
                     <i class="bi bi-basket display-4"></i>
@@ -538,15 +687,16 @@
             <div class="p-3 border-top bg-light" style="flex-shrink:0;">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="fw-bold">TOTAL:</span>
-                    <span class="fw-bold text-danger fs-5" id="mobileTotalDisplay">&#8369;0.00</span>
+                    <span class="fw-bold text-danger fs-5" id="mobileTotalDisplay">₱0.00</span>
                 </div>
                 <div class="input-group mb-2">
                     <span class="input-group-text bg-white"><i class="bi bi-cash"></i></span>
-                    <input type="text" inputmode="decimal" id="mobileAmountPaid" class="form-control fw-bold text-end" placeholder="Cash" autocomplete="off">
+                    <input type="text" inputmode="decimal" id="mobileAmountPaid"
+                           class="form-control fw-bold text-end" placeholder="Cash" autocomplete="off">
                 </div>
                 <div class="d-flex justify-content-between px-1 mb-3">
                     <span class="small fw-bold text-muted">CHANGE:</span>
-                    <span class="fw-bold text-success" id="mobileChangeDisplay">&#8369;0.00</span>
+                    <span class="fw-bold text-success" id="mobileChangeDisplay">₱0.00</span>
                 </div>
                 <button id="mobileBtnPay" class="btn btn-danger w-100 fw-bold py-3 fs-5">PAYMENT</button>
             </div>
@@ -556,17 +706,14 @@
     <div id="mobile-bottom-nav-host"></div>
 
     <script>
-        const _rawToggleOrder = makeSlidePanelToggle('mobileOrderBody', 'mobileOrderArrow', null, false);
+        const _rawToggleOrder = makeSlidePanelToggle('mobileOrderBody','mobileOrderArrow',null,false);
 
         function syncPaletteView() {
             const panel = document.querySelector('.sismo-slide-panel.d-md-none');
             const btn   = document.getElementById('palette-btn');
             if (!panel || !btn) return;
-            if (window.innerWidth >= 768) {
-                btn.style.setProperty('bottom', '30px');
-                return;
-            }
-            btn.style.setProperty('bottom', (64 + panel.offsetHeight + 8) + 'px', 'important');
+            if (window.innerWidth >= 768) { btn.style.setProperty('bottom','30px'); return; }
+            btn.style.setProperty('bottom',(64 + panel.offsetHeight + 8) + 'px','important');
         }
 
         function toggleMobileOrder() {
@@ -580,9 +727,9 @@
         }
 
         document.getElementById('mobileAmountPaid').addEventListener('input', (e) => {
-            let val = e.target.value.replace(/[^0-9.]/g, '');
-            const firstDot = val.indexOf('.');
-            if (firstDot !== -1) val = val.slice(0, firstDot + 1) + val.slice(firstDot + 1).replace(/\./g, '');
+            let val = e.target.value.replace(/[^0-9.]/g,'');
+            const fd = val.indexOf('.');
+            if (fd !== -1) val = val.slice(0,fd+1)+val.slice(fd+1).replace(/\./g,'');
             if (e.target.value !== val) e.target.value = val;
             document.getElementById('amountPaidInput').value = val;
             calculateChange();
@@ -595,31 +742,31 @@
         });
 
         renderMobileBottomNav([
-            { icon: 'bi-search',   label: 'Search', id: 'mnavSearch', onclick: 'toggleSearch()' },
-            { icon: 'bi-x-circle', label: 'Clear',  id: 'mnavClear',  onclick: 'clearCart()' },
-            { icon: 'bi-box-seam', label: 'Stock',  id: 'mnavStock',  onclick: 'checkStock()' }
+            { icon:'bi-search',   label:'Search', id:'mnavSearch', onclick:'toggleSearch()' },
+            { icon:'bi-x-circle', label:'Clear',  id:'mnavClear',  onclick:'clearCart()' },
+            { icon:'bi-box-seam', label:'Stock',  id:'mnavStock',  onclick:'checkStock()' }
         ]);
 
-        setTimeout(syncPaletteView, 120);
-        window.addEventListener('resize', syncPaletteView);
+        setTimeout(syncPaletteView,120);
+        window.addEventListener('resize',syncPaletteView);
     </script>
 
-    <button id="palette-btn" class="btn btn-dark shadow" onclick="document.getElementById('bgPicker').click()" style="position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; z-index: 9999;" title="Change Background">
+    <!-- Background color picker -->
+    <button id="palette-btn" class="btn btn-dark shadow"
+            onclick="document.getElementById('bgPicker').click()"
+            style="position:fixed;bottom:30px;right:30px;width:50px;height:50px;border-radius:50%;z-index:9999;"
+            title="Change Background">
         <i class="bi bi-palette-fill"></i>
     </button>
-    <input type="color" id="bgPicker" style="visibility: hidden; position: fixed; bottom: 30px; right: 30px;">
+    <input type="color" id="bgPicker" style="visibility:hidden;position:fixed;bottom:30px;right:30px;">
 
     <script>
         const picker = document.getElementById('bgPicker');
         const savedColor = localStorage.getItem('carxpert_bg_color');
-        if (savedColor) {
-            applyBgColor(savedColor);
-            picker.value = savedColor;
-        }
-        picker.addEventListener('input', (e) => {
-            const color = e.target.value;
-            applyBgColor(color);
-            localStorage.setItem('carxpert_bg_color', color);
+        if (savedColor) { applyBgColor(savedColor); picker.value = savedColor; }
+        picker.addEventListener('input', e => {
+            applyBgColor(e.target.value);
+            localStorage.setItem('carxpert_bg_color', e.target.value);
         });
     </script>
 </body>
