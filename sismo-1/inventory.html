@@ -28,9 +28,6 @@
         .badge-brandnew  { background:#198754; color:#fff; }
         .badge-surplus   { background:#fd7e14; color:#fff; }
 
-        /* ── Wholesale price highlight ── */
-        .wholesale-price { color: #0d6efd; font-weight: 600; font-size: .85rem; }
-
         /* ── Search filter pills ── */
         .filter-pill {
             cursor: pointer;
@@ -43,6 +40,14 @@
         }
         .filter-pill.active-new     { background:#d1e7dd; border-color:#198754; color:#0f5132; }
         .filter-pill.active-surplus { background:#ffe5d0; border-color:#fd7e14; color:#7d3900; }
+        
+        /* Highlight read-only automated inputs */
+        .auto-calculated {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            font-weight: bold;
+            color: #d32f2f;
+        }
     </style>
 </head>
 <body>
@@ -51,7 +56,6 @@
         <div class="spinner-border text-danger" role="status"></div>
     </div>
 
-    <!-- ── AUTH GUARD ── -->
     <script type="module">
         import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -73,7 +77,6 @@
         window._sismoSignOut = async () => { await signOut(getAuth(_app)); window.location.replace('index.html'); };
     </script>
 
-    <!-- ── PAGE HEADER ── -->
     <div id="page-header"></div>
     <script>
         const _fromView = new URLSearchParams(window.location.search).get('from') === 'view';
@@ -95,7 +98,6 @@
         });
     </script>
 
-    <!-- ── MOBILE SEARCH BAR ── -->
     <div id="mobileSearchBar" class="d-none d-md-none px-3 py-2 border-bottom bg-white">
         <div class="input-group">
             <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
@@ -106,7 +108,6 @@
 
     <div class="container-fluid py-3 py-md-2">
 
-        <!-- ── DESKTOP SEARCH ── -->
         <div class="row mb-2 d-none d-md-flex">
             <div class="col-md-7 mx-auto">
                 <div class="input-group shadow-sm">
@@ -115,7 +116,6 @@
                            placeholder="Search by name, OEM, category, or truck (e.g. 'Isuzu Elf', '4D32')…">
                     <button class="btn btn-danger" type="button" id="btnSearch">Search</button>
                 </div>
-                <!-- Condition filter pills -->
                 <div class="d-flex gap-2 mt-2 ms-1 align-items-center">
                     <small class="text-muted">Filter:</small>
                     <span class="filter-pill" id="pillAll"    onclick="setConditionFilter('All')">All</span>
@@ -125,7 +125,6 @@
             </div>
         </div>
 
-        <!-- ── CATEGORY SCROLL ── -->
         <div class="category-wrapper mb-2">
             <div class="category-scroll text-center">
                 <button class="btn btn-dark cat-btn"              onclick="filterCategory('All')">All Parts</button>
@@ -139,7 +138,6 @@
             </div>
         </div>
 
-        <!-- ── INVENTORY TABLE ── -->
         <div class="card border-0 shadow-sm">
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -150,8 +148,8 @@
                                 <th>Condition</th>
                                 <th>Category</th>
                                 <th>OEM / Fits</th>
-                                <th>Avg Cost</th>
-                                <th>Retail&nbsp;/&nbsp;Wholesale</th>
+                                <th>Supply Cost</th>
+                                <th>Retail Price</th>
                                 <th>Stock</th>
                                 <th class="text-end pe-4">Actions</th>
                             </tr>
@@ -168,9 +166,6 @@
     </div>
 
 
-    <!-- ═══════════════════════════════════════════════
-         MODAL: ADD NEW PART
-    ═══════════════════════════════════════════════ -->
     <div class="modal fade" id="addProductModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content border-danger">
@@ -181,7 +176,6 @@
                 <div class="modal-body">
                     <form id="addProductForm">
 
-                        <!-- Image -->
                         <div class="mb-3 p-3 bg-light rounded border">
                             <label class="form-label fw-bold small">Part Image</label>
                             <input type="file" id="prodImgFile" class="form-control mb-2" accept="image/*" onchange="previewFile('add', this)">
@@ -190,14 +184,12 @@
                             </div>
                         </div>
 
-                        <!-- Row 1: Name + Condition -->
                         <div class="row">
                             <div class="col-md-8 mb-3">
                                 <label class="form-label">Part Name</label>
                                 <input type="text" id="prodName" class="form-control" placeholder="Ex: Mitsubishi Oil Filter" required>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <!-- ★ NEW: Condition dropdown -->
                                 <label class="form-label fw-bold">Condition <span class="text-danger">*</span></label>
                                 <select id="prodCondition" class="form-select" required>
                                     <option value="Brand New">🟢 Brand New</option>
@@ -206,7 +198,6 @@
                             </div>
                         </div>
 
-                        <!-- Row 2: OEM + Category -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Part Number (OEM)</label>
@@ -226,7 +217,6 @@
                             </div>
                         </div>
 
-                        <!-- ★ NEW: Truck Compatibility -->
                         <div class="mb-3">
                             <label class="form-label fw-bold">
                                 <i class="bi bi-truck me-1 text-warning"></i>
@@ -240,26 +230,19 @@
                             </small>
                         </div>
 
-                        <!-- Row 3: Supply Cost + Retail + Wholesale -->
                         <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label text-muted">Supply Cost (₱)</label>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted fw-bold">Supply Cost (₱)</label>
                                 <input type="number" id="prodSupplyPrice" class="form-control" placeholder="0.00" step="0.01" required>
+                                <small class="text-muted">How much you paid the supplier</small>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <!-- ★ RENAMED: Selling Price → Retail Price -->
-                                <label class="form-label fw-bold">Retail Price (₱) <span class="text-danger">*</span></label>
-                                <input type="number" id="prodPrice" class="form-control" placeholder="0.00" step="0.01" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <!-- ★ NEW: Wholesale Price -->
-                                <label class="form-label fw-bold text-primary">Wholesale Price (₱)</label>
-                                <input type="number" id="prodWholesalePrice" class="form-control" placeholder="0.00" step="0.01">
-                                <small class="text-muted">For fleet / bulk buyers</small>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-danger">Retail Price (+35%)</label>
+                                <input type="number" id="prodPrice" class="form-control auto-calculated" placeholder="0.00" step="0.01" readonly required>
+                                <small class="text-danger">Calculates automatically</small>
                             </div>
                         </div>
 
-                        <!-- Row 4: Stock -->
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Initial Stock</label>
@@ -280,9 +263,6 @@
     </div>
 
 
-    <!-- ═══════════════════════════════════════════════
-         MODAL: EDIT PART
-    ═══════════════════════════════════════════════ -->
     <div class="modal fade" id="editProductModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content border-danger">
@@ -294,7 +274,6 @@
                     <form id="editProductForm">
                         <input type="hidden" id="editProdId">
 
-                        <!-- Image -->
                         <div class="mb-3 p-3 bg-light rounded border">
                             <label class="form-label fw-bold small">Update Image</label>
                             <input type="file" id="editProdImgFile" class="form-control mb-2" accept="image/*" onchange="previewFile('edit', this)">
@@ -303,14 +282,12 @@
                             </div>
                         </div>
 
-                        <!-- Row 1: Name + Condition -->
                         <div class="row">
                             <div class="col-md-8 mb-3">
                                 <label class="form-label">Part Name</label>
                                 <input type="text" id="editProdName" class="form-control" required>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <!-- ★ NEW: Condition dropdown -->
                                 <label class="form-label fw-bold">Condition <span class="text-danger">*</span></label>
                                 <select id="editProdCondition" class="form-select" required>
                                     <option value="Brand New">🟢 Brand New</option>
@@ -319,7 +296,6 @@
                             </div>
                         </div>
 
-                        <!-- Row 2: OEM + Category -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Part Number (OEM)</label>
@@ -339,7 +315,6 @@
                             </div>
                         </div>
 
-                        <!-- ★ NEW/UPDATED: Truck Compatibility -->
                         <div class="mb-3">
                             <label class="form-label fw-bold">
                                 <i class="bi bi-truck me-1 text-warning"></i>
@@ -350,22 +325,17 @@
                             <small class="text-muted">Comma-separated. Include truck brand/model keywords for smart search.</small>
                         </div>
 
-                        <!-- Row 3: Retail + Wholesale -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <!-- ★ RENAMED -->
-                                <label class="form-label fw-bold">Retail Price (₱) <span class="text-danger">*</span></label>
-                                <input type="number" id="editProdPrice" class="form-control" step="0.01" required>
+                                <label class="form-label fw-bold text-muted">Supply Cost (₱)</label>
+                                <input type="number" id="editProdSupplyPrice" class="form-control" step="0.01" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <!-- ★ NEW: Wholesale Price -->
-                                <label class="form-label fw-bold text-primary">Wholesale Price (₱)</label>
-                                <input type="number" id="editProdWholesalePrice" class="form-control" step="0.01" placeholder="0.00">
-                                <small class="text-muted">Leave 0 if no wholesale tier</small>
+                                <label class="form-label fw-bold text-danger">Retail Price (+35%)</label>
+                                <input type="number" id="editProdPrice" class="form-control auto-calculated" step="0.01" readonly required>
                             </div>
                         </div>
 
-                        <!-- Manual Stock -->
                         <div class="mb-3 border-top pt-3">
                             <label class="form-label fw-bold text-danger">Manual Stock Adjustment</label>
                             <div class="input-group">
@@ -387,9 +357,6 @@
     </div>
 
 
-    <!-- ═══════════════════════════════════════════════
-         MODAL: RESTOCK (unchanged structure, fixed markup)
-    ═══════════════════════════════════════════════ -->
     <div class="modal fade" id="restockModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content border-success">
@@ -424,12 +391,8 @@
         </div>
     </div>
 
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- ═══════════════════════════════════════════════
-         MAIN INVENTORY LOGIC
-    ═══════════════════════════════════════════════ -->
     <script type="module">
         import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import {
@@ -447,83 +410,76 @@
             appId: "1:180376885101:web:0cdfffab3fe965e1722c64",
             measurementId: "G-7E0D6YT43R"
         };
-        const app = getApps()[0]; // already initialized by auth guard
+        const app = getApps()[0]; 
         const db  = getFirestore(app);
 
-        // ── Set default restock date ───────────────────────────
         document.getElementById('restockReceived').valueAsDate = new Date();
 
-        // ── State ──────────────────────────────────────────────
         let allProducts         = [];
         let activeCategoryFilter = 'All';
-        let activeConditionFilter = 'All';   // ★ NEW
+        let activeConditionFilter = 'All';   
 
-        // ══════════════════════════════════════════════════════
-        // ★ SMART SEARCH: Surplus Truck Model → Engine Code Map
-        //   Searching "Isuzu Elf" will match any part tagged with
-        //   any of its common engine codes, and vice versa.
-        // ══════════════════════════════════════════════════════
+        // ── TRUCK MAP ──────────────────────────────────────
         const TRUCK_MAP = {
-            // ── ISUZU ──────────────────────────────────────────
             'isuzu elf':      ['4hf1','4hg1','4he1','4jb1','4bc2','4be1','4bd1'],
             'isuzu forward':  ['6hh1','6hk1','6sd1','6bg1'],
             'isuzu giga':     ['6wf1','6wg1','6sd1'],
             'isuzu npr':      ['4hf1','4he1','4jj1'],
             'isuzu nqr':      ['4hk1','4he1'],
             'isuzu fsr':      ['6hh1','6bg1'],
-            // ── MITSUBISHI / FUSO ──────────────────────────────
             'fuso canter':    ['4d32','4d33','4d34','4d35','4m50'],
             'fuso fighter':   ['6d16','6d17','6m60'],
             'fuso rosa':      ['4d33','4d34'],
             'mitsubishi canter': ['4d32','4d33','4d34','4d35','4m50'],
-            // ── HINO ──────────────────────────────────────────
             'hino ranger':    ['j08c','j08e','ef750','fd','fe6'],
             'hino dutro':     ['n04c','s05c'],
             'hino 500':       ['j08c','j08e'],
             'hino 300':       ['n04c'],
-            // ── NISSAN / UD ───────────────────────────────────
             'nissan condor':  ['fe6','fd6','rf8'],
             'ud condor':      ['fe6','fd6','rf8'],
             'nissan diesel':  ['fe6','fd6'],
-            // ── TOYOTA ────────────────────────────────────────
             'toyota dyna':    ['14b','15b','bu'],
             'toyota coaster': ['1hz','1hd'],
         };
 
-        /**
-         * ★ SMART SEARCH HELPER
-         * Expands a query like "Isuzu Elf" into related engine codes,
-         * then returns true if the part's compatTags or any text field matches.
-         */
         function smartMatch(item, rawQuery) {
             if (!rawQuery) return true;
             const q = rawQuery.toLowerCase().trim();
 
-            // Build expanded keyword set from truck map
             const expandedTerms = new Set([q]);
             for (const [truckModel, engines] of Object.entries(TRUCK_MAP)) {
                 if (truckModel.includes(q) || q.includes(truckModel)) {
                     engines.forEach(e => expandedTerms.add(e));
                 }
-                // Reverse: if query is an engine code, also match its parent trucks
                 if (engines.some(e => e === q)) {
                     expandedTerms.add(truckModel);
                 }
             }
 
-            // Fields to search against
             const haystack = [
                 item.name        || '',
                 item.oem         || '',
                 item.category    || '',
                 item.condition   || '',
-                ...(item.compatTags || [])          // ★ array of tags
+                ...(item.compatTags || [])          
             ].join(' ').toLowerCase();
 
             return [...expandedTerms].some(term => haystack.includes(term));
         }
 
-        // ── Image compression helper ───────────────────────────
+        // ── Auto-Calculate 35% Markup ───────────────────────
+        document.getElementById('prodSupplyPrice').addEventListener('input', function() {
+            const supply = parseFloat(this.value) || 0;
+            document.getElementById('prodPrice').value = (supply * 1.35).toFixed(2);
+        });
+
+        document.getElementById('editProdSupplyPrice').addEventListener('input', function() {
+            const supply = parseFloat(this.value) || 0;
+            document.getElementById('editProdPrice').value = (supply * 1.35).toFixed(2);
+        });
+
+
+        // ── Image compression ──────────────────────────────
         const compressImage = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -554,21 +510,19 @@
             }
         };
 
-        // ★ Parse compat string → array of cleaned tags
         function parseCompatTags(str) {
             if (!str) return [];
             return str.split(',').map(t => t.trim()).filter(Boolean);
         }
 
         // ══════════════════════════════════════════════════════
-        // 1. LOAD DATA from Firestore
+        // 1. LOAD DATA
         // ══════════════════════════════════════════════════════
         onSnapshot(query(collection(db, "products")), (snapshot) => {
             allProducts = [];
             snapshot.forEach((d) => {
                 const item = d.data();
                 item.id = d.id;
-                // Back-compat: if old doc has string compat, convert on the fly
                 if (!item.compatTags) {
                     item.compatTags = parseCompatTags(item.compat || '');
                 }
@@ -595,22 +549,14 @@
                 if (item.stock === 0)      rowClass = "table-danger text-muted";
                 else if (item.stock < 5)   rowClass = "table-warning";
 
-                // ★ Condition badge
                 const isSurplus = item.condition === 'Surplus';
                 const condBadge = `<span class="badge ${isSurplus ? 'badge-surplus' : 'badge-brandnew'} small">
                                        ${isSurplus ? '🟠 Surplus' : '🟢 Brand New'}
                                    </span>`;
 
-                // ★ Truck compatibility chips
                 const tags = (item.compatTags || []).map(t =>
                     `<span class="truck-tag">${t}</span>`
                 ).join('') || '<small class="text-muted">—</small>';
-
-                // ★ Wholesale price display
-                const wholesale = (item.wholesalePrice && item.wholesalePrice > 0)
-                    ? `<br><span class="wholesale-price">₱${item.wholesalePrice.toFixed(2)}</span>
-                       <small class="text-muted"> WS</small>`
-                    : '';
 
                 tbody.innerHTML += `
                     <tr class="${rowClass}">
@@ -624,7 +570,6 @@
                         <td class="text-secondary">₱${(item.supplyPrice || 0).toFixed(2)}</td>
                         <td>
                             <span class="text-danger fw-bold">₱${(item.price || 0).toFixed(2)}</span>
-                            ${wholesale}
                         </td>
                         <td>
                             <span class="badge ${item.stock > 0 ? 'bg-success' : 'bg-danger'} fs-6">${item.stock}</span>
@@ -649,21 +594,16 @@
         // ══════════════════════════════════════════════════════
         // 3. FILTER HELPERS
         // ══════════════════════════════════════════════════════
-
-        // ★ Combined filter: category + condition + search query
         function applyFilters() {
             const searchQuery = (document.getElementById('searchInput')?.value || '').trim();
             let results = allProducts;
 
-            // Category
             if (activeCategoryFilter !== 'All') {
                 results = results.filter(i => i.category === activeCategoryFilter);
             }
-            // Condition
             if (activeConditionFilter !== 'All') {
                 results = results.filter(i => (i.condition || 'Brand New') === activeConditionFilter);
             }
-            // Smart search
             if (searchQuery) {
                 results = results.filter(i => smartMatch(i, searchQuery));
             }
@@ -681,7 +621,6 @@
             applyFilters();
         };
 
-        // ★ Condition filter (pill buttons)
         window.setConditionFilter = function(cond) {
             activeConditionFilter = cond;
             document.getElementById('pillAll').className     = 'filter-pill' + (cond === 'All'       ? ' active-new' : '');
@@ -689,14 +628,11 @@
             document.getElementById('pillSurplus').className = 'filter-pill' + (cond === 'Surplus'   ? ' active-surplus' : '');
             applyFilters();
         };
-        // Set initial pill state
         setConditionFilter('All');
 
-        // Search listeners
         document.getElementById('searchInput').addEventListener('input', applyFilters);
         document.getElementById('btnSearch').addEventListener('click', applyFilters);
 
-        // ── Button event delegation ────────────────────────────
         function attachButtonListeners() {
             document.querySelectorAll('.restock-btn').forEach(btn => btn.addEventListener('click', e => {
                 const p = allProducts.find(x => x.id === e.target.closest('button').dataset.id);
@@ -715,23 +651,22 @@
         }
 
         // ══════════════════════════════════════════════════════
-        // 4A. SAVE NEW PART  ← addDoc with new fields
+        // 4A. SAVE NEW PART 
         // ══════════════════════════════════════════════════════
         document.getElementById('btnSaveProduct').addEventListener('click', async () => {
             const btn = document.getElementById('btnSaveProduct');
 
             const name           = document.getElementById('prodName').value.trim();
             const oem            = document.getElementById('prodOEM').value.trim();
-            const compatRaw      = document.getElementById('prodCompat').value.trim();    // ★
+            const compatRaw      = document.getElementById('prodCompat').value.trim();    
             const supplyPrice    = parseFloat(document.getElementById('prodSupplyPrice').value) || 0;
             const price          = parseFloat(document.getElementById('prodPrice').value);
-            const wholesalePrice = parseFloat(document.getElementById('prodWholesalePrice').value) || 0; // ★
             const stock          = parseInt(document.getElementById('prodStock').value);
             const category       = document.getElementById('prodCategory').value;
-            const condition      = document.getElementById('prodCondition').value;        // ★
+            const condition      = document.getElementById('prodCondition').value;        
 
-            if (!name || isNaN(price) || isNaN(stock)) {
-                alert("Please fill in Name, Retail Price, and Stock."); return;
+            if (!name || isNaN(supplyPrice) || isNaN(stock)) {
+                alert("Please fill in Name, Supply Cost, and Stock."); return;
             }
 
             btn.disabled = true; btn.innerText = "Saving…";
@@ -742,19 +677,16 @@
             try {
                 if (fileInput.files[0]) finalImage = await compressImage(fileInput.files[0]);
 
-                // ★ Parse compat string into searchable array
                 const compatTags = parseCompatTags(compatRaw);
 
-                // ── addDoc ─────────────────────────────────────────
                 await addDoc(collection(db, "products"), {
                     name,
                     oem,
-                    compat:         compatRaw,      // kept for display / legacy
-                    compatTags,                     // ★ array for smart search
-                    condition,                      // ★ "Brand New" | "Surplus"
+                    compat:         compatRaw,      
+                    compatTags,                     
+                    condition,                      
                     supplyPrice,
-                    price,                          // retail price
-                    wholesalePrice,                 // ★ wholesale price
+                    price,                          // auto-calculated retail price
                     stock,
                     category,
                     image:     finalImage,
@@ -774,7 +706,7 @@
         });
 
         // ══════════════════════════════════════════════════════
-        // 4B. RESTOCK SHIPMENT (unchanged logic)
+        // 4B. RESTOCK SHIPMENT
         // ══════════════════════════════════════════════════════
         document.getElementById('btnSubmitRestock').addEventListener('click', async () => {
             const id   = document.getElementById('restockProdId').value;
@@ -787,11 +719,15 @@
             const newTotalStock = product.stock + qty;
             const oldValue     = (product.supplyPrice || 0) * product.stock;
             const newAvgCost   = (oldValue + cost * qty) / newTotalStock;
+            
+            // Auto-calculate new Retail Price based on the newly averaged supply cost
+            const newRetailPrice = newAvgCost * 1.35; 
 
             try {
                 await updateDoc(doc(db, "products", id), {
                     stock:       newTotalStock,
-                    supplyPrice: newAvgCost
+                    supplyPrice: newAvgCost,
+                    price:       newRetailPrice
                 });
                 alert("✅ Stock Updated Successfully!");
                 bootstrap.Modal.getInstance(document.getElementById('restockModal')).hide();
@@ -799,7 +735,7 @@
         });
 
         // ══════════════════════════════════════════════════════
-        // 4C. UPDATE PART DETAILS  ← updateDoc with new fields
+        // 4C. UPDATE PART DETAILS
         // ══════════════════════════════════════════════════════
         document.getElementById('btnUpdateProduct').addEventListener('click', async () => {
             const btn = document.getElementById('btnUpdateProduct');
@@ -807,32 +743,30 @@
             const id             = document.getElementById('editProdId').value;
             const name           = document.getElementById('editProdName').value.trim();
             const oem            = document.getElementById('editProdOEM').value.trim();
-            const compatRaw      = document.getElementById('editProdCompat').value.trim();    // ★
+            const compatRaw      = document.getElementById('editProdCompat').value.trim();    
+            const supplyPrice    = parseFloat(document.getElementById('editProdSupplyPrice').value) || 0;
             const price          = parseFloat(document.getElementById('editProdPrice').value);
-            const wholesalePrice = parseFloat(document.getElementById('editProdWholesalePrice').value) || 0; // ★
             const category       = document.getElementById('editProdCategory').value;
-            const condition      = document.getElementById('editProdCondition').value;        // ★
+            const condition      = document.getElementById('editProdCondition').value;        
             const manualStock    = parseInt(document.getElementById('editProdStock').value);
 
-            if (!name || isNaN(price) || isNaN(manualStock)) { alert("Check required fields."); return; }
+            if (!name || isNaN(supplyPrice) || isNaN(manualStock)) { alert("Check required fields."); return; }
 
             btn.disabled = true; btn.innerText = "Updating…";
 
             const fileInput = document.getElementById('editProdImgFile');
 
             try {
-                // ★ Parse compat string into searchable array
                 const compatTags = parseCompatTags(compatRaw);
 
-                // ── updateDoc ──────────────────────────────────────
                 let updateData = {
                     name,
                     oem,
-                    compat:         compatRaw,      // kept for display
-                    compatTags,                     // ★ array for smart search
-                    condition,                      // ★ "Brand New" | "Surplus"
-                    price,                          // retail price
-                    wholesalePrice,                 // ★ wholesale price
+                    compat:         compatRaw,      
+                    compatTags,                     
+                    condition,                      
+                    supplyPrice,
+                    price,                          // auto-calculated retail
                     category,
                     stock:    manualStock
                 };
@@ -868,10 +802,13 @@
             document.getElementById('editProdId').value          = item.id;
             document.getElementById('editProdName').value        = item.name;
             document.getElementById('editProdOEM').value         = item.oem  || "";
-            document.getElementById('editProdCompat').value      = item.compat || (item.compatTags || []).join(', '); // ★
-            document.getElementById('editProdCondition').value   = item.condition || 'Brand New';  // ★
-            document.getElementById('editProdPrice').value       = item.price;
-            document.getElementById('editProdWholesalePrice').value = item.wholesalePrice || 0;    // ★
+            document.getElementById('editProdCompat').value      = item.compat || (item.compatTags || []).join(', '); 
+            document.getElementById('editProdCondition').value   = item.condition || 'Brand New';  
+            
+            // Fill Supply Cost and Auto-Calculate Retail
+            document.getElementById('editProdSupplyPrice').value = item.supplyPrice || 0;
+            document.getElementById('editProdPrice').value       = item.price || 0;
+            
             document.getElementById('editProdCategory').value    = item.category;
             document.getElementById('editProdStock').value       = item.stock;
 
