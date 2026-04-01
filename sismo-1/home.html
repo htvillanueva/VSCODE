@@ -40,24 +40,24 @@
     <script>
         renderPageHeader({
             siteTitle: 'CAR-XPERT',
-            rightHtml: `<a href="#" onclick="window._sismoSignOut()" class="btn btn-outline-danger">Logout</a>`
+            rightHtml: `<a href="#" onclick="window._sismoSignOut()" class="btn btn-outline-danger fw-bold">Logout</a>`
         });
     </script>
 
     <div class="container py-4">
 
         <div class="d-flex align-items-center gap-2 mb-4">
-            <h4 class="mb-0 fw-bold">Good Day, Partner! 🔧</h4>
+            <h4 class="mb-0 fw-bold header-greeting">Good Day, Boss! 🚛</h4>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-4 dashboard-cards">
             <div class="col-md-4">
                 <a href="view.html" class="text-decoration-none">
-                    <div class="card h-100 border-0 shadow-sm bg-danger text-white p-4" style="background-color: #dc3545 !important;">
+                    <div class="card h-100 border-0 shadow-sm custom-card pos-card">
                         <div class="card-body text-center">
-                            <i class="bi bi-cart4 display-1 mb-3"></i>
-                            <h3>Point of Sale</h3>
-                            <p class="text-white-50">Record transactions and serve customers.</p>
+                            <i class="bi bi-cart4 display-1 mb-3 icon-heavy"></i>
+                            <h3 class="fw-bold">Point of Sale</h3>
+                            <p class="card-desc">Process retail and wholesale truck parts.</p>
                         </div>
                     </div>
                 </a>
@@ -65,11 +65,11 @@
             
             <div class="col-md-4">
                 <a href="sales.html" class="text-decoration-none">
-                    <div class="card h-100 border-0 shadow-sm p-4">
+                    <div class="card h-100 border-0 shadow-sm custom-card bg-white">
                         <div class="card-body text-center text-secondary">
-                            <i class="bi bi-graph-up-arrow display-1 mb-3"></i>
-                            <h3>Sales & Analytics</h3>
-                            <p>View daily income & performance reports.</p> 
+                            <i class="bi bi-graph-up-arrow display-1 mb-3 icon-dark"></i>
+                            <h3 class="fw-bold text-dark">Sales & Analytics</h3>
+                            <p class="text-muted">View daily income & wholesale performance.</p> 
                         </div>   
                     </div>
                 </a>
@@ -77,24 +77,24 @@
 
             <div class="col-md-4">
                 <a href="inventory.html" class="text-decoration-none">
-                    <div class="card h-100 border-0 shadow-sm p-4">
+                    <div class="card h-100 border-0 shadow-sm custom-card bg-white">
                         <div class="card-body text-center text-secondary">
-                            <i class="bi bi-box-seam display-1 mb-3"></i>
-                            <h3>Manage Inventory</h3>
-                            <p>Manage car parts, fluids, and stock levels.</p>
+                            <i class="bi bi-box-seam display-1 mb-3 icon-dark"></i>
+                            <h3 class="fw-bold text-dark">Manage Inventory</h3>
+                            <p class="text-muted">Manage new & surplus truck parts inventory.</p>
                         </div>
                     </div>
                 </a>
             </div>
             
-            <div class="col-12">
-                <div class="card border-0 shadow-sm p-3">
-                    <div class="card-body d-flex justify-content-between align-items-center">
+            <div class="col-12 mt-5">
+                <div class="card border-0 shadow-sm p-4 target-card">
+                    <div class="card-body d-flex justify-content-between align-items-center p-0">
                         <div>
-                            <h5 class="mb-0 fw-bold">Daily Sales Target</h5>
-                            <small class="text-muted" id="targetText">Loading...</small>
+                            <h5 class="mb-0 fw-bold text-dark">Daily Sales Target</h5>
+                            <small class="text-muted fw-bold" id="targetText">Loading...</small>
                         </div>
-                        <div class="progress w-50" style="height: 15px;">
+                        <div class="progress w-50 custom-progress">
                             <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-danger" style="width: 0%"></div>
                         </div>
                     </div>
@@ -104,88 +104,3 @@
     </div>
 
     <script type="module">
-        import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        // ==========================================
-        // 🚨 NEW CAR-XPERT KEYS 🚨
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyD81sF9ClxA_HKRaEkmCSyHXXRCHR1efkk",
-            authDomain: "car-xpert-76d1b.firebaseapp.com",
-            projectId: "car-xpert-76d1b",
-            storageBucket: "car-xpert-76d1b.firebasestorage.app",
-            messagingSenderId: "180376885101",
-            appId: "1:180376885101:web:0cdfffab3fe965e1722c64",
-            measurementId: "G-7E0D6YT43R"
-        };
-
-        const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // --- CONFIGURATION ---
-        const DAILY_TARGET = 15000; // 🎯 Updated target for Auto Supply
-
-        // --- REAL-TIME LISTENER ---
-        const salesCol = collection(db, "sales");
-        
-        onSnapshot(salesCol, (snapshot) => {
-            let todayTotal = 0;
-            const todayStr = new Date().toDateString(); 
-
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.date && data.date.toDate) {
-                    const saleDate = data.date.toDate().toDateString();
-                    if (saleDate === todayStr) {
-                        todayTotal += data.total;
-                    }
-                }
-            });
-
-            updateProgressUI(todayTotal);
-        });
-
-        function updateProgressUI(currentAmount) {
-            const targetElement = document.getElementById('targetText');
-            const barElement = document.getElementById('progressBar');
-
-            let percentage = (currentAmount / DAILY_TARGET) * 100;
-            if (percentage > 100) percentage = 100;
-
-            targetElement.innerHTML = `₱${currentAmount.toLocaleString()} / ₱${DAILY_TARGET.toLocaleString()}`;
-            barElement.style.width = percentage + "%";
-
-            if (percentage >= 100) {
-                barElement.className = "progress-bar bg-success"; 
-                barElement.innerText = "Goal Reached! 🎉";
-            } else if (percentage >= 50) {
-                barElement.className = "progress-bar bg-warning text-dark"; 
-                barElement.innerText = Math.round(percentage) + "%";
-            } else {
-                barElement.className = "progress-bar bg-danger"; 
-                barElement.innerText = Math.round(percentage) + "%";
-            }
-        }
-    </script>
-
-    <button class="btn btn-dark shadow" onclick="document.getElementById('bgPicker').click()" style="position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; z-index: 9999;" title="Change Background">
-        <i class="bi bi-palette-fill"></i>
-    </button>
-    <input type="color" id="bgPicker" style="visibility: hidden; position: fixed; bottom: 30px; right: 30px;">
-
-    <script>
-        const picker = document.getElementById('bgPicker');
-        const savedColor = localStorage.getItem('carxpert_bg_color');
-        if (savedColor) {
-            applyBgColor(savedColor);
-            picker.value = savedColor;
-        }
-        picker.addEventListener('input', (e) => {
-            const color = e.target.value;
-            applyBgColor(color);
-            localStorage.setItem('carxpert_bg_color', color);
-        });
-    </script>
-</body>
-</html>
