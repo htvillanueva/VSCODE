@@ -651,7 +651,7 @@
         }
 
         // ══════════════════════════════════════════════════════
-        // 4A. SAVE NEW PART (Fixed Modal Closing)
+        // 4A. SAVE NEW PART (With Anti-Freeze Timeout)
         // ══════════════════════════════════════════════════════
         document.getElementById('btnSaveProduct').addEventListener('click', async () => {
             const btn = document.getElementById('btnSaveProduct');
@@ -669,7 +669,7 @@
                 alert("Please fill in Name, Supply Cost, and Stock."); return;
             }
 
-            btn.disabled = true; btn.innerText = "Saving...";
+            btn.disabled = true; btn.innerText = "Saving…";
 
             const fileInput = document.getElementById('prodImgFile');
             let finalImage  = "";
@@ -678,21 +678,24 @@
                 if (fileInput.files[0]) finalImage = await compressImage(fileInput.files[0]);
                 const compatTags = parseCompatTags(compatRaw);
 
-                await addDoc(collection(db, "products"), {
+                const productData = {
                     name, oem, compat: compatRaw, compatTags, condition, supplyPrice, price, stock, category,
                     image: finalImage, createdAt: new Date()
-                });
+                };
 
-                // ★ THE FIX: Safer way to close the modal
-                const modalEl = document.getElementById('addProductModal');
-                const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                modalInstance.hide();
+                // ★ THE FIX: 7-Second Timeout to prevent infinite freezing
+                const saveTask = addDoc(collection(db, "products"), productData);
+                const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout: Could not reach database. Please turn off Adblockers/Brave Shields or check your internet.")), 7000));
+
+                await Promise.race([saveTask, timeoutTask]);
+
+                // ★ THE FIX: Bulletproof way to close the modal (simulates clicking the 'X')
+                document.querySelector('#addProductModal .btn-close').click();
                 
                 document.getElementById('addProductForm').reset();
                 document.getElementById('addImgPreview').style.display = 'none';
-                
-                // Show alert AFTER the window closes
-                setTimeout(() => alert("✅ Auto Part Added Successfully!"), 300);
+
+                setTimeout(() => alert("✅ Auto Part Added Successfully!"), 400);
 
             } catch (e) {
                 alert("Error: " + e.message);
@@ -702,12 +705,13 @@
         });
 
         // ══════════════════════════════════════════════════════
-        // 4B. RESTOCK SHIPMENT (Fixed Modal Closing)
+        // 4B. RESTOCK SHIPMENT (With Anti-Freeze Timeout)
         // ══════════════════════════════════════════════════════
         document.getElementById('btnSubmitRestock').addEventListener('click', async () => {
             const id   = document.getElementById('restockProdId').value;
             const qty  = parseInt(document.getElementById('restockQty').value);
             const cost = parseFloat(document.getElementById('restockCost').value);
+            const btn  = document.getElementById('btnSubmitRestock');
 
             if (!id || isNaN(qty) || isNaN(cost) || qty < 1) { alert("Check all fields."); return; }
 
@@ -717,24 +721,31 @@
             const newAvgCost   = (oldValue + cost * qty) / newTotalStock;
             const newRetailPrice = newAvgCost * 1.35; 
 
+            btn.disabled = true; btn.innerText = "Processing...";
+
             try {
-                await updateDoc(doc(db, "products", id), {
+                const updateTask = updateDoc(doc(db, "products", id), {
                     stock:       newTotalStock,
                     supplyPrice: newAvgCost,
                     price:       newRetailPrice
                 });
+                const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout: Could not reach database.")), 7000));
+
+                await Promise.race([updateTask, timeoutTask]);
                 
-                // ★ THE FIX
-                const restockEl = document.getElementById('restockModal');
-                const restockInstance = bootstrap.Modal.getInstance(restockEl) || new bootstrap.Modal(restockEl);
-                restockInstance.hide();
-                
-                setTimeout(() => alert("✅ Stock Updated Successfully!"), 300);
-            } catch (e) { alert(e.message); }
+                // Bulletproof close
+                document.querySelector('#restockModal .btn-close').click();
+                setTimeout(() => alert("✅ Stock Updated Successfully!"), 400);
+
+            } catch (e) { 
+                alert("Error: " + e.message); 
+            } finally {
+                btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirm Restock';
+            }
         });
 
         // ══════════════════════════════════════════════════════
-        // 4C. UPDATE PART DETAILS (Fixed Modal Closing)
+        // 4C. UPDATE PART DETAILS (With Anti-Freeze Timeout)
         // ══════════════════════════════════════════════════════
         document.getElementById('btnUpdateProduct').addEventListener('click', async () => {
             const btn = document.getElementById('btnUpdateProduct');
@@ -751,7 +762,8 @@
 
             if (!name || isNaN(supplyPrice) || isNaN(manualStock)) { alert("Check required fields."); return; }
 
-            btn.disabled = true; btn.innerText = "Updating...";
+            btn.disabled = true; btn.innerText = "Updating…";
+
             const fileInput = document.getElementById('editProdImgFile');
 
             try {
@@ -759,18 +771,20 @@
                 let updateData = { name, oem, compat: compatRaw, compatTags, condition, supplyPrice, price, category, stock: manualStock };
 
                 if (fileInput.files[0]) updateData.image = await compressImage(fileInput.files[0]);
-                await updateDoc(doc(db, "products", id), updateData);
 
-                // ★ THE FIX
-                const editEl = document.getElementById('editProductModal');
-                const editInstance = bootstrap.Modal.getInstance(editEl) || new bootstrap.Modal(editEl);
-                editInstance.hide();
+                const updateTask = updateDoc(doc(db, "products", id), updateData);
+                const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout: Could not reach database.")), 7000));
 
-                setTimeout(() => alert("✅ Details Updated!"), 300);
+                await Promise.race([updateTask, timeoutTask]);
+
+                // Bulletproof close
+                document.querySelector('#editProductModal .btn-close').click();
+                setTimeout(() => alert("✅ Details Updated!"), 400);
+
             } catch (e) {
                 alert("Error: " + e.message);
             } finally {
-                btn.disabled = false; btn.innerText = "Update Details";
+                btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Update Details';
             }
         });
 
@@ -782,10 +796,7 @@
             document.getElementById('restockProdName').innerText = "Restock: " + item.name;
             document.getElementById('restockCost').value   = item.supplyPrice || 0;
             document.getElementById('restockQty').value    = "";
-            
-            const restockEl = document.getElementById('restockModal');
-            const restockInstance = bootstrap.Modal.getInstance(restockEl) || new bootstrap.Modal(restockEl);
-            restockInstance.show();
+            new bootstrap.Modal(document.getElementById('restockModal')).show();
         }
 
         function openEditModal(item) {
@@ -805,10 +816,9 @@
             if (item.image) { preview.src = item.image; preview.style.display = 'block'; }
             else            { preview.style.display = 'none'; }
 
-            const editEl = document.getElementById('editProductModal');
-            const editInstance = bootstrap.Modal.getInstance(editEl) || new bootstrap.Modal(editEl);
-            editInstance.show();
+            new bootstrap.Modal(document.getElementById('editProductModal')).show();
         }
+
     </script>
 </body>
 </html>
