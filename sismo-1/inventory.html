@@ -11,43 +11,13 @@
     <script src="assets/js/components.js?v=2"></script>
 
     <style>
-        /* ── Truck tag chips ── */
-        .truck-tag {
-            display: inline-block;
-            background: #fff3cd;
-            color: #664d03;
-            border: 1px solid #ffc107;
-            border-radius: 4px;
-            font-size: 0.68rem;
-            font-weight: 600;
-            padding: 1px 5px;
-            margin: 1px 2px 1px 0;
-            letter-spacing: .4px;
-        }
-        /* ── Condition badges ── */
+        .truck-tag { display: inline-block; background: #fff3cd; color: #664d03; border: 1px solid #ffc107; border-radius: 4px; font-size: 0.68rem; font-weight: 600; padding: 1px 5px; margin: 1px 2px 1px 0; letter-spacing: .4px; }
         .badge-brandnew  { background:#198754; color:#fff; }
         .badge-surplus   { background:#fd7e14; color:#fff; }
-
-        /* ── Search filter pills ── */
-        .filter-pill {
-            cursor: pointer;
-            font-size: .78rem;
-            padding: 3px 10px;
-            border-radius: 20px;
-            border: 1px solid #dee2e6;
-            background: #f8f9fa;
-            transition: all .15s;
-        }
+        .filter-pill { cursor: pointer; font-size: .78rem; padding: 3px 10px; border-radius: 20px; border: 1px solid #dee2e6; background: #f8f9fa; transition: all .15s; }
         .filter-pill.active-new     { background:#d1e7dd; border-color:#198754; color:#0f5132; }
         .filter-pill.active-surplus { background:#ffe5d0; border-color:#fd7e14; color:#7d3900; }
-        
-        /* Highlight read-only automated inputs */
-        .auto-calculated {
-            background-color: #e9ecef;
-            cursor: not-allowed;
-            font-weight: bold;
-            color: #d32f2f;
-        }
+        .auto-calculated { background-color: #e9ecef; cursor: not-allowed; font-weight: bold; color: #d32f2f; }
     </style>
 </head>
 <body>
@@ -107,7 +77,6 @@
     </div>
 
     <div class="container-fluid py-3 py-md-2">
-
         <div class="row mb-2 d-none d-md-flex">
             <div class="col-md-7 mx-auto">
                 <div class="input-group shadow-sm">
@@ -147,7 +116,7 @@
                                 <th class="ps-4">Part Name</th>
                                 <th>Condition</th>
                                 <th>Category</th>
-                                <th>OEM / Fits</th>
+                                <th>OEM / Barcode</th>
                                 <th>Supply Cost</th>
                                 <th>Retail Price</th>
                                 <th>Stock</th>
@@ -161,10 +130,8 @@
                 </div>
             </div>
         </div>
-
         <div class="d-md-none" style="height:60px;"></div>
     </div>
-
 
     <div class="modal fade" id="addProductModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -175,7 +142,6 @@
                 </div>
                 <div class="modal-body">
                     <form id="addProductForm">
-
                         <div class="mb-3 p-3 bg-light rounded border">
                             <label class="form-label fw-bold small">Part Image</label>
                             <input type="file" id="prodImgFile" class="form-control mb-2" accept="image/*" onchange="previewFile('add', this)">
@@ -199,11 +165,15 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label text-primary fw-bold"><i class="bi bi-upc-scan"></i> Barcode</label>
+                                <input type="text" id="prodBarcode" class="form-control" placeholder="Scan or type here">
+                            </div>
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Part Number (OEM)</label>
                                 <input type="text" id="prodOEM" class="form-control" placeholder="Ex: ME013307">
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Category</label>
                                 <select id="prodCategory" class="form-select" required>
                                     <option>Engine Parts</option>
@@ -219,27 +189,19 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">
-                                <i class="bi bi-truck me-1 text-warning"></i>
-                                Truck Compatibility — Engine / Chassis Codes
+                                <i class="bi bi-truck me-1 text-warning"></i> Truck Compatibility — Engine / Chassis Codes
                             </label>
-                            <input type="text" id="prodCompat" class="form-control"
-                                   placeholder="e.g. 4D32, 4HG1, 6D14  (comma-separated)">
-                            <small class="text-muted">
-                                Separate codes with commas. Include truck model keywords too —
-                                <em>"Isuzu Elf, 4HF1, 4HG1"</em> — for smarter search results.
-                            </small>
+                            <input type="text" id="prodCompat" class="form-control" placeholder="e.g. 4D32, 4HG1, 6D14  (comma-separated)">
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label text-muted fw-bold">Supply Cost (₱)</label>
                                 <input type="number" id="prodSupplyPrice" class="form-control" placeholder="0.00" step="0.01" required>
-                                <small class="text-muted">How much you paid the supplier</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-danger">Retail Price (+35%)</label>
                                 <input type="number" id="prodPrice" class="form-control auto-calculated" placeholder="0.00" step="0.01" readonly required>
-                                <small class="text-danger">Calculates automatically</small>
                             </div>
                         </div>
 
@@ -249,7 +211,6 @@
                                 <input type="number" id="prodStock" class="form-control" placeholder="0" min="0" required>
                             </div>
                         </div>
-
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -261,7 +222,6 @@
             </div>
         </div>
     </div>
-
 
     <div class="modal fade" id="editProductModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -297,11 +257,15 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label text-primary fw-bold"><i class="bi bi-upc-scan"></i> Barcode</label>
+                                <input type="text" id="editProdBarcode" class="form-control" placeholder="Scan or type here">
+                            </div>
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Part Number (OEM)</label>
                                 <input type="text" id="editProdOEM" class="form-control">
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Category</label>
                                 <select id="editProdCategory" class="form-select" required>
                                     <option>Engine Parts</option>
@@ -317,12 +281,9 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">
-                                <i class="bi bi-truck me-1 text-warning"></i>
-                                Truck Compatibility — Engine / Chassis Codes
+                                <i class="bi bi-truck me-1 text-warning"></i> Truck Compatibility — Engine / Chassis Codes
                             </label>
-                            <input type="text" id="editProdCompat" class="form-control"
-                                   placeholder="e.g. 4D32, 4HG1, Isuzu Elf, Fuso Canter">
-                            <small class="text-muted">Comma-separated. Include truck brand/model keywords for smart search.</small>
+                            <input type="text" id="editProdCompat" class="form-control">
                         </div>
 
                         <div class="row">
@@ -342,7 +303,6 @@
                                 <span class="input-group-text">Current Stock</span>
                                 <input type="number" id="editProdStock" class="form-control" min="0" required>
                             </div>
-                            <small class="text-muted">Only change for corrections. Use the 🚚 Restock button for new shipments.</small>
                         </div>
                     </form>
                 </div>
@@ -355,7 +315,6 @@
             </div>
         </div>
     </div>
-
 
     <div class="modal fade" id="restockModal" tabindex="-1">
         <div class="modal-dialog">
@@ -400,7 +359,6 @@
             query, doc, updateDoc, deleteDoc
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ── Firebase: car-xpert-76d1b ──────────────────────────
         const firebaseConfig = {
             apiKey: "AIzaSyD81sF9ClxA_HKRaEkmCSyHXXRCHR1efkk",
             authDomain: "car-xpert-76d1b.firebaseapp.com",
@@ -415,59 +373,41 @@
 
         document.getElementById('restockReceived').valueAsDate = new Date();
 
-        let allProducts         = [];
+        let allProducts          = [];
         let activeCategoryFilter = 'All';
         let activeConditionFilter = 'All';   
 
-        // ── TRUCK MAP ──────────────────────────────────────
         const TRUCK_MAP = {
             'isuzu elf':      ['4hf1','4hg1','4he1','4jb1','4bc2','4be1','4bd1'],
             'isuzu forward':  ['6hh1','6hk1','6sd1','6bg1'],
             'isuzu giga':     ['6wf1','6wg1','6sd1'],
             'isuzu npr':      ['4hf1','4he1','4jj1'],
-            'isuzu nqr':      ['4hk1','4he1'],
-            'isuzu fsr':      ['6hh1','6bg1'],
             'fuso canter':    ['4d32','4d33','4d34','4d35','4m50'],
-            'fuso fighter':   ['6d16','6d17','6m60'],
-            'fuso rosa':      ['4d33','4d34'],
             'mitsubishi canter': ['4d32','4d33','4d34','4d35','4m50'],
-            'hino ranger':    ['j08c','j08e','ef750','fd','fe6'],
-            'hino dutro':     ['n04c','s05c'],
-            'hino 500':       ['j08c','j08e'],
-            'hino 300':       ['n04c'],
-            'nissan condor':  ['fe6','fd6','rf8'],
-            'ud condor':      ['fe6','fd6','rf8'],
-            'nissan diesel':  ['fe6','fd6'],
-            'toyota dyna':    ['14b','15b','bu'],
-            'toyota coaster': ['1hz','1hd'],
+            'hino ranger':    ['j08c','j08e','ef750','fd','fe6']
         };
 
         function smartMatch(item, rawQuery) {
             if (!rawQuery) return true;
             const q = rawQuery.toLowerCase().trim();
 
+            // Check exact barcode match first
+            if (item.barcode && item.barcode.toLowerCase() === q) return true;
+
             const expandedTerms = new Set([q]);
             for (const [truckModel, engines] of Object.entries(TRUCK_MAP)) {
-                if (truckModel.includes(q) || q.includes(truckModel)) {
-                    engines.forEach(e => expandedTerms.add(e));
-                }
-                if (engines.some(e => e === q)) {
-                    expandedTerms.add(truckModel);
-                }
+                if (truckModel.includes(q) || q.includes(truckModel)) engines.forEach(e => expandedTerms.add(e));
+                if (engines.some(e => e === q)) expandedTerms.add(truckModel);
             }
 
             const haystack = [
-                item.name        || '',
-                item.oem         || '',
-                item.category    || '',
-                item.condition   || '',
+                item.name || '', item.oem || '', item.category || '', item.barcode || '', item.condition || '',
                 ...(item.compatTags || [])          
             ].join(' ').toLowerCase();
 
             return [...expandedTerms].some(term => haystack.includes(term));
         }
 
-        // ── Auto-Calculate 35% Markup ───────────────────────
         document.getElementById('prodSupplyPrice').addEventListener('input', function() {
             const supply = parseFloat(this.value) || 0;
             document.getElementById('prodPrice').value = (supply * 1.35).toFixed(2);
@@ -478,8 +418,6 @@
             document.getElementById('editProdPrice').value = (supply * 1.35).toFixed(2);
         });
 
-
-        // ── Image compression ──────────────────────────────
         const compressImage = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -492,7 +430,7 @@
                     let [w, h] = [img.width, img.height];
                     const MAX = 800;
                     if (w > h) { if (w > MAX) { h *= MAX/w; w = MAX; } }
-                    else        { if (h > MAX) { w *= MAX/h; h = MAX; } }
+                    else       { if (h > MAX) { w *= MAX/h; h = MAX; } }
                     canvas.width = w; canvas.height = h;
                     ctx.drawImage(img, 0, 0, w, h);
                     resolve(canvas.toDataURL('image/jpeg', 0.7));
@@ -515,26 +453,18 @@
             return str.split(',').map(t => t.trim()).filter(Boolean);
         }
 
-        // ══════════════════════════════════════════════════════
-        // 1. LOAD DATA
-        // ══════════════════════════════════════════════════════
         onSnapshot(query(collection(db, "products")), (snapshot) => {
             allProducts = [];
             snapshot.forEach((d) => {
                 const item = d.data();
                 item.id = d.id;
-                if (!item.compatTags) {
-                    item.compatTags = parseCompatTags(item.compat || '');
-                }
+                if (!item.compatTags) item.compatTags = parseCompatTags(item.compat || '');
                 allProducts.push(item);
             });
             window.allProductsGlobal = allProducts;
             applyFilters();
         });
 
-        // ══════════════════════════════════════════════════════
-        // 2. RENDER TABLE
-        // ══════════════════════════════════════════════════════
         window.renderTable = function(productsToRender) {
             const tbody = document.getElementById('inventoryTableBody');
             tbody.innerHTML = "";
@@ -550,40 +480,26 @@
                 else if (item.stock < 5)   rowClass = "table-warning";
 
                 const isSurplus = item.condition === 'Surplus';
-                const condBadge = `<span class="badge ${isSurplus ? 'badge-surplus' : 'badge-brandnew'} small">
-                                       ${isSurplus ? '🟠 Surplus' : '🟢 Brand New'}
-                                   </span>`;
+                const condBadge = `<span class="badge ${isSurplus ? 'badge-surplus' : 'badge-brandnew'} small">${isSurplus ? '🟠 Surplus' : '🟢 Brand New'}</span>`;
 
-                const tags = (item.compatTags || []).map(t =>
-                    `<span class="truck-tag">${t}</span>`
-                ).join('') || '<small class="text-muted">—</small>';
+                const tags = (item.compatTags || []).map(t => `<span class="truck-tag">${t}</span>`).join('') || '<small class="text-muted">—</small>';
+                
+                // Show barcode if OEM doesn't exist
+                const codeDisplay = item.oem ? item.oem : (item.barcode ? `<i class="bi bi-upc"></i> ${item.barcode}` : 'N/A');
 
                 tbody.innerHTML += `
                     <tr class="${rowClass}">
-                        <td class="ps-4 fw-bold">
-                            ${item.name}<br>
-                            <div class="mt-1">${tags}</div>
-                        </td>
+                        <td class="ps-4 fw-bold">${item.name}<br><div class="mt-1">${tags}</div></td>
                         <td>${condBadge}</td>
                         <td class="text-muted">${item.category}</td>
-                        <td class="text-dark fw-bold small">${item.oem || 'N/A'}</td>
+                        <td class="text-dark fw-bold small">${codeDisplay}</td>
                         <td class="text-secondary">₱${(item.supplyPrice || 0).toFixed(2)}</td>
-                        <td>
-                            <span class="text-danger fw-bold">₱${(item.price || 0).toFixed(2)}</span>
-                        </td>
-                        <td>
-                            <span class="badge ${item.stock > 0 ? 'bg-success' : 'bg-danger'} fs-6">${item.stock}</span>
-                        </td>
+                        <td><span class="text-danger fw-bold">₱${(item.price || 0).toFixed(2)}</span></td>
+                        <td><span class="badge ${item.stock > 0 ? 'bg-success' : 'bg-danger'} fs-6">${item.stock}</span></td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-success me-1 restock-btn" data-id="${item.id}" title="Restock Part">
-                                <i class="bi bi-truck"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-primary edit-btn me-1" data-id="${item.id}" title="Edit Info">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.id}" data-name="${item.name}">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            <button class="btn btn-sm btn-success me-1 restock-btn" data-id="${item.id}" title="Restock"><i class="bi bi-truck"></i></button>
+                            <button class="btn btn-sm btn-outline-primary edit-btn me-1" data-id="${item.id}" title="Edit"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.id}" data-name="${item.name}"><i class="bi bi-trash"></i></button>
                         </td>
                     </tr>`;
             });
@@ -591,23 +507,12 @@
             attachButtonListeners();
         };
 
-        // ══════════════════════════════════════════════════════
-        // 3. FILTER HELPERS
-        // ══════════════════════════════════════════════════════
         function applyFilters() {
             const searchQuery = (document.getElementById('searchInput')?.value || '').trim();
             let results = allProducts;
-
-            if (activeCategoryFilter !== 'All') {
-                results = results.filter(i => i.category === activeCategoryFilter);
-            }
-            if (activeConditionFilter !== 'All') {
-                results = results.filter(i => (i.condition || 'Brand New') === activeConditionFilter);
-            }
-            if (searchQuery) {
-                results = results.filter(i => smartMatch(i, searchQuery));
-            }
-
+            if (activeCategoryFilter !== 'All') results = results.filter(i => i.category === activeCategoryFilter);
+            if (activeConditionFilter !== 'All') results = results.filter(i => (i.condition || 'Brand New') === activeConditionFilter);
+            if (searchQuery) results = results.filter(i => smartMatch(i, searchQuery));
             renderTable(results);
         }
 
@@ -628,35 +533,26 @@
             document.getElementById('pillSurplus').className = 'filter-pill' + (cond === 'Surplus'   ? ' active-surplus' : '');
             applyFilters();
         };
-        setConditionFilter('All');
 
         document.getElementById('searchInput').addEventListener('input', applyFilters);
-        document.getElementById('btnSearch').addEventListener('click', applyFilters);
 
         function attachButtonListeners() {
-            document.querySelectorAll('.restock-btn').forEach(btn => btn.addEventListener('click', e => {
-                const p = allProducts.find(x => x.id === e.target.closest('button').dataset.id);
-                if (p) openRestockModal(p);
-            }));
-            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', e => {
-                const p = allProducts.find(x => x.id === e.target.closest('button').dataset.id);
-                if (p) openEditModal(p);
-            }));
+            document.querySelectorAll('.restock-btn').forEach(btn => btn.addEventListener('click', e => openRestockModal(allProducts.find(x => x.id === e.target.closest('button').dataset.id))));
+            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', e => openEditModal(allProducts.find(x => x.id === e.target.closest('button').dataset.id))));
             document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async e => {
                 const b = e.target.closest('button');
-                if (confirm(`Delete "${b.dataset.name}"?`)) {
-                    await deleteDoc(doc(db, "products", b.dataset.id));
-                }
+                if (confirm(`Delete "${b.dataset.name}"?`)) await deleteDoc(doc(db, "products", b.dataset.id));
             }));
         }
 
         // ══════════════════════════════════════════════════════
-        // 4A. SAVE NEW PART (With Anti-Freeze Timeout)
+        // 4A. SAVE NEW PART
         // ══════════════════════════════════════════════════════
         document.getElementById('btnSaveProduct').addEventListener('click', async () => {
             const btn = document.getElementById('btnSaveProduct');
 
             const name           = document.getElementById('prodName').value.trim();
+            const barcode        = document.getElementById('prodBarcode').value.trim(); // ★ New Barcode Field
             const oem            = document.getElementById('prodOEM').value.trim();
             const compatRaw      = document.getElementById('prodCompat').value.trim();    
             const supplyPrice    = parseFloat(document.getElementById('prodSupplyPrice').value) || 0;
@@ -679,33 +575,26 @@
                 const compatTags = parseCompatTags(compatRaw);
 
                 const productData = {
-                    name, oem, compat: compatRaw, compatTags, condition, supplyPrice, price, stock, category,
+                    name, barcode, oem, compat: compatRaw, compatTags, condition, supplyPrice, price, stock, category,
                     image: finalImage, createdAt: new Date()
                 };
 
-                // ★ THE FIX: 7-Second Timeout to prevent infinite freezing
                 const saveTask = addDoc(collection(db, "products"), productData);
-                const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout: Could not reach database. Please turn off Adblockers/Brave Shields or check your internet.")), 7000));
+                const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout.")), 7000));
 
                 await Promise.race([saveTask, timeoutTask]);
 
-                // ★ THE FIX: Bulletproof way to close the modal (simulates clicking the 'X')
                 document.querySelector('#addProductModal .btn-close').click();
-                
                 document.getElementById('addProductForm').reset();
                 document.getElementById('addImgPreview').style.display = 'none';
-
                 setTimeout(() => alert("✅ Auto Part Added Successfully!"), 400);
 
-            } catch (e) {
-                alert("Error: " + e.message);
-            } finally {
-                btn.disabled = false; btn.innerText = "Save Part";
-            }
+            } catch (e) { alert("Error: " + e.message); } 
+            finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-save me-1"></i>Save Part'; }
         });
 
         // ══════════════════════════════════════════════════════
-        // 4B. RESTOCK SHIPMENT (With Anti-Freeze Timeout)
+        // 4B. RESTOCK SHIPMENT 
         // ══════════════════════════════════════════════════════
         document.getElementById('btnSubmitRestock').addEventListener('click', async () => {
             const id   = document.getElementById('restockProdId').value;
@@ -724,34 +613,25 @@
             btn.disabled = true; btn.innerText = "Processing...";
 
             try {
-                const updateTask = updateDoc(doc(db, "products", id), {
-                    stock:       newTotalStock,
-                    supplyPrice: newAvgCost,
-                    price:       newRetailPrice
-                });
-                const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout: Could not reach database.")), 7000));
-
+                const updateTask = updateDoc(doc(db, "products", id), { stock: newTotalStock, supplyPrice: newAvgCost, price: newRetailPrice });
+                const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout")), 7000));
                 await Promise.race([updateTask, timeoutTask]);
                 
-                // Bulletproof close
                 document.querySelector('#restockModal .btn-close').click();
                 setTimeout(() => alert("✅ Stock Updated Successfully!"), 400);
-
-            } catch (e) { 
-                alert("Error: " + e.message); 
-            } finally {
-                btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirm Restock';
-            }
+            } catch (e) { alert("Error: " + e.message); } 
+            finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirm Restock'; }
         });
 
         // ══════════════════════════════════════════════════════
-        // 4C. UPDATE PART DETAILS (With Anti-Freeze Timeout)
+        // 4C. UPDATE PART DETAILS
         // ══════════════════════════════════════════════════════
         document.getElementById('btnUpdateProduct').addEventListener('click', async () => {
             const btn = document.getElementById('btnUpdateProduct');
 
             const id             = document.getElementById('editProdId').value;
             const name           = document.getElementById('editProdName').value.trim();
+            const barcode        = document.getElementById('editProdBarcode').value.trim(); // ★ New Barcode Field
             const oem            = document.getElementById('editProdOEM').value.trim();
             const compatRaw      = document.getElementById('editProdCompat').value.trim();    
             const supplyPrice    = parseFloat(document.getElementById('editProdSupplyPrice').value) || 0;
@@ -763,34 +643,24 @@
             if (!name || isNaN(supplyPrice) || isNaN(manualStock)) { alert("Check required fields."); return; }
 
             btn.disabled = true; btn.innerText = "Updating…";
-
             const fileInput = document.getElementById('editProdImgFile');
 
             try {
                 const compatTags = parseCompatTags(compatRaw);
-                let updateData = { name, oem, compat: compatRaw, compatTags, condition, supplyPrice, price, category, stock: manualStock };
-
+                let updateData = { name, barcode, oem, compat: compatRaw, compatTags, condition, supplyPrice, price, category, stock: manualStock };
                 if (fileInput.files[0]) updateData.image = await compressImage(fileInput.files[0]);
 
                 const updateTask = updateDoc(doc(db, "products", id), updateData);
-                const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout: Could not reach database.")), 7000));
-
+                const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout")), 7000));
                 await Promise.race([updateTask, timeoutTask]);
 
-                // Bulletproof close
                 document.querySelector('#editProductModal .btn-close').click();
                 setTimeout(() => alert("✅ Details Updated!"), 400);
 
-            } catch (e) {
-                alert("Error: " + e.message);
-            } finally {
-                btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Update Details';
-            }
+            } catch (e) { alert("Error: " + e.message); } 
+            finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Update Details'; }
         });
 
-        // ══════════════════════════════════════════════════════
-        // MODAL OPENERS
-        // ══════════════════════════════════════════════════════
         function openRestockModal(item) {
             document.getElementById('restockProdId').value  = item.id;
             document.getElementById('restockProdName').innerText = "Restock: " + item.name;
@@ -802,6 +672,7 @@
         function openEditModal(item) {
             document.getElementById('editProdId').value          = item.id;
             document.getElementById('editProdName').value        = item.name;
+            document.getElementById('editProdBarcode').value     = item.barcode || ""; // ★ Load Barcode
             document.getElementById('editProdOEM').value         = item.oem  || "";
             document.getElementById('editProdCompat').value      = item.compat || (item.compatTags || []).join(', '); 
             document.getElementById('editProdCondition').value   = item.condition || 'Brand New';  
@@ -818,7 +689,6 @@
 
             new bootstrap.Modal(document.getElementById('editProductModal')).show();
         }
-
     </script>
 </body>
 </html>
