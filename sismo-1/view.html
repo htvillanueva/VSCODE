@@ -15,19 +15,16 @@
         .text-brand { color: #dc3545 !important; }
         .bg-brand   { background-color: #dc3545 !important; color: white; }
 
-        /* ── Condition badges on cards ── */
-        .cond-badge {
-            font-size: .6rem; font-weight: 700; padding: 1px 5px;
-            border-radius: 3px; letter-spacing: .3px;
-        }
+        .cond-badge { font-size: .6rem; font-weight: 700; padding: 1px 5px; border-radius: 3px; letter-spacing: .3px; }
         .cond-badge.new     { background:#d1e7dd; color:#0f5132; }
         .cond-badge.surplus { background:#ffe5d0; color:#7d3900; }
+        .card-compat-tag { display: inline-block; font-size:.58rem; background:#fff3cd; color:#664d03; border:1px solid #ffc107; border-radius:3px; padding:0 4px; margin:1px 1px 0 0; line-height:1.5; }
 
-        /* ── Truck compat micro-tags on cards ── */
-        .card-compat-tag {
-            display: inline-block; font-size:.58rem; background:#fff3cd;
-            color:#664d03; border:1px solid #ffc107; border-radius:3px;
-            padding:0 4px; margin:1px 1px 0 0; line-height:1.5;
+        /* ── RECEIPT PRINT STYLES ── */
+        @media print {
+            body * { visibility: hidden; }
+            #printReceipt, #printReceipt * { visibility: visible; }
+            #printReceipt { position: absolute; left: 0; top: 0; width: 80mm; padding: 0; margin: 0; color: #000; font-family: 'Courier New', Courier, monospace; }
         }
     </style>
 </head>
@@ -68,9 +65,9 @@
 
     <div id="search-bar-container" class="d-none border-bottom bg-white px-3 py-2">
         <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <span class="input-group-text"><i class="bi bi-upc-scan text-primary fw-bold"></i></span>
             <input type="text" id="searchInput" class="form-control"
-                   placeholder="Search by name, OEM, or truck (e.g. 'Isuzu Elf', '4D32')…">
+                   placeholder="Click here and scan barcode, or search by name...">
             <button class="btn btn-outline-secondary" id="btnCloseSearch">Close</button>
         </div>
         <div class="d-flex gap-2 mt-2 align-items-center">
@@ -143,8 +140,8 @@
             </div>
 
             <div class="col-md-2 action-panel d-none d-md-flex flex-column">
-                <button class="btn btn-light action-btn text-primary" onclick="toggleSearch()">
-                    <i class="bi bi-search"></i> Search
+                <button class="btn btn-light action-btn text-primary border-primary border-2 fw-bold" onclick="toggleSearch()">
+                    <i class="bi bi-upc-scan"></i> SCAN / SEARCH
                 </button>
                 <button class="btn btn-light action-btn text-danger" onclick="clearCart()">
                     <i class="bi bi-x-circle"></i> CLEAR
@@ -156,6 +153,8 @@
         </div>
     </div>
 
+    <div id="printReceipt" class="d-none"></div>
+
     <script type="module">
         import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import {
@@ -166,36 +165,17 @@
         const app = getApps()[0];
         const db  = getFirestore(app);
 
-        // ── State ──────────────────────────────────────────────
         let allProducts        = [];
         let cart               = [];
         let currentCustomer    = "Walk-in";
         let posCondFilter      = "All";          
         let activeCategoryFilter = "All";
 
-        // ══════════════════════════════════════════════════════
-        // ★ SMART SEARCH — same TRUCK_MAP as inventory
-        // ══════════════════════════════════════════════════════
         const TRUCK_MAP = {
             'isuzu elf':         ['4hf1','4hg1','4he1','4jb1','4bc2','4be1','4bd1'],
             'isuzu forward':     ['6hh1','6hk1','6sd1','6bg1'],
-            'isuzu giga':        ['6wf1','6wg1','6sd1'],
-            'isuzu npr':         ['4hf1','4he1','4jj1'],
-            'isuzu nqr':         ['4hk1','4he1'],
-            'isuzu fsr':         ['6hh1','6bg1'],
             'fuso canter':       ['4d32','4d33','4d34','4d35','4m50'],
-            'fuso fighter':      ['6d16','6d17','6m60'],
-            'fuso rosa':         ['4d33','4d34'],
-            'mitsubishi canter': ['4d32','4d33','4d34','4d35','4m50'],
-            'hino ranger':       ['j08c','j08e','ef750','fd','fe6'],
-            'hino dutro':        ['n04c','s05c'],
-            'hino 500':          ['j08c','j08e'],
-            'hino 300':          ['n04c'],
-            'nissan condor':     ['fe6','fd6','rf8'],
-            'ud condor':         ['fe6','fd6','rf8'],
-            'nissan diesel':     ['fe6','fd6'],
-            'toyota dyna':       ['14b','15b','bu'],
-            'toyota coaster':    ['1hz','1hd'],
+            'hino ranger':       ['j08c','j08e','ef750','fd','fe6']
         };
 
         function smartMatch(item, rawQuery) {
@@ -207,26 +187,20 @@
                 if (engines.some(e => e === q)) expanded.add(model);
             }
             const hay = [
-                item.name || '', item.oem || '', item.category || '',
-                item.condition || '',
+                item.name || '', item.oem || '', item.barcode || '', item.category || '', item.condition || '',
                 ...(item.compatTags || [])
             ].join(' ').toLowerCase();
             return [...expanded].some(t => hay.includes(t));
         }
 
-        // ── Condition filter for POS search ───────────────────
         window.setPosCondFilter = function(cond) {
             posCondFilter = cond;
-            ['spillAll','spillNew','spillSurplus'].forEach(id =>
-                document.getElementById(id).style.opacity = '0.45');
+            ['spillAll','spillNew','spillSurplus'].forEach(id => document.getElementById(id).style.opacity = '0.45');
             const map = { 'All':'spillAll', 'Brand New':'spillNew', 'Surplus':'spillSurplus' };
             document.getElementById(map[cond]).style.opacity = '1';
             applyPosFilters();
         };
 
-        // ══════════════════════════════════════════════════════
-        // 1. LOAD PRODUCTS
-        // ══════════════════════════════════════════════════════
         const productGrid = document.getElementById('productGrid');
 
         onSnapshot(collection(db, "products"), (snapshot) => {
@@ -234,33 +208,21 @@
             snapshot.forEach((d) => {
                 let p = d.data();
                 p.id = d.id;
-                if (!p.compatTags) {
-                    p.compatTags = (p.compat || '').split(',').map(t => t.trim()).filter(Boolean);
-                }
+                if (!p.compatTags) p.compatTags = (p.compat || '').split(',').map(t => t.trim()).filter(Boolean);
                 allProducts.push(p);
             });
             applyPosFilters();
         });
 
-        // ── Combined filter: category + condition + search ─────
         function applyPosFilters() {
             const searchText = (document.getElementById('searchInput')?.value || '').trim();
             let results = allProducts;
-            if (activeCategoryFilter !== 'All') {
-                results = results.filter(p => p.category === activeCategoryFilter);
-            }
-            if (posCondFilter !== 'All') {
-                results = results.filter(p => (p.condition || 'Brand New') === posCondFilter);
-            }
-            if (searchText) {
-                results = results.filter(p => smartMatch(p, searchText));
-            }
+            if (activeCategoryFilter !== 'All') results = results.filter(p => p.category === activeCategoryFilter);
+            if (posCondFilter !== 'All') results = results.filter(p => (p.condition || 'Brand New') === posCondFilter);
+            if (searchText) results = results.filter(p => smartMatch(p, searchText));
             renderProducts(results);
         }
 
-        // ══════════════════════════════════════════════════════
-        // 2. RENDER PRODUCT CARDS  
-        // ══════════════════════════════════════════════════════
         window.renderProducts = function(productsToRender) {
             productGrid.innerHTML = "";
             if (productsToRender.length === 0) {
@@ -276,17 +238,12 @@
                 const statusCls  = outOfStock ? 'text-danger fw-bold' : 'text-success';
 
                 const imgSrc = p.image || "https://placehold.co/150x120?text=No+Image";
-
                 const isSurplus  = (p.condition === 'Surplus');
-                const condBadge  = `<span class="cond-badge ${isSurplus ? 'surplus' : 'new'}">
-                                        ${isSurplus ? '🟠 Surplus' : '🟢 New'}
-                                    </span>`;
-
-                const tags = (p.compatTags || []).slice(0, 3)
-                    .map(t => `<span class="card-compat-tag">${t}</span>`).join('');
-
-                const displayPrice = p.price || 0;
-                const priceHtml = `<small class="text-danger fw-bold d-block">₱${displayPrice.toFixed(2)}</small>`;
+                const condBadge  = `<span class="cond-badge ${isSurplus ? 'surplus' : 'new'}">${isSurplus ? '🟠 Surplus' : '🟢 New'}</span>`;
+                const tags = (p.compatTags || []).slice(0, 3).map(t => `<span class="card-compat-tag">${t}</span>`).join('');
+                
+                // Show a little barcode icon if it has a barcode assigned
+                const codeIcon = p.barcode ? `<i class="bi bi-upc text-muted" title="Has Barcode"></i>` : '';
 
                 productGrid.innerHTML += `
                 <div class="col-4 col-lg-3">
@@ -294,10 +251,10 @@
                         <div class="card-body p-1 d-flex flex-column h-100">
                             <img src="${imgSrc}" class="product-card-img" alt="${p.name}">
                             <div class="mb-1">${condBadge}</div>
-                            <div class="product-title" title="${p.name}">${p.name}</div>
+                            <div class="product-title" title="${p.name}">${codeIcon} ${p.name}</div>
                             ${tags ? `<div class="mb-1">${tags}</div>` : ''}
                             <div class="mt-auto">
-                                ${priceHtml}
+                                <small class="text-danger fw-bold d-block">₱${(p.price || 0).toFixed(2)}</small>
                                 <small class="${statusCls} small">${statusText}</small>
                             </div>
                         </div>
@@ -306,13 +263,9 @@
             });
         };
 
-        // ══════════════════════════════════════════════════════
-        // 3. CART FUNCTIONS
-        // ══════════════════════════════════════════════════════
         window.addToCart = function(id) {
             const product = allProducts.find(p => p.id === id);
             const existing = cart.find(i => i.id === id);
-            const price = product.price || 0;
 
             if (existing) {
                 if (existing.qty + 1 > product.stock) { alert("Not enough stock!"); return; }
@@ -321,7 +274,7 @@
                 cart.push({
                     id:        product.id,
                     name:      product.name,
-                    price,     
+                    price:     product.price || 0,     
                     stock:     product.stock,
                     image:     product.image,
                     condition: product.condition || 'Brand New',
@@ -341,14 +294,11 @@
             const _mt = document.getElementById('mobileTotalDisplay');
 
             if (cart.length === 0) {
-                const emptyHTML = `<div class="text-center text-muted mt-5">
-                    <i class="bi bi-basket display-4"></i><p class="mt-2">No Items Yet</p></div>`;
+                const emptyHTML = `<div class="text-center text-muted mt-5"><i class="bi bi-basket display-4"></i><p class="mt-2">No Items Yet</p></div>`;
                 container.innerHTML = emptyHTML;
                 totalDisplay.innerText = "₱0.00";
                 countBadge.innerText = "0";
-                if (_mc) _mc.innerHTML = emptyHTML;
-                if (_mb) _mb.innerText = '0';
-                if (_mt) _mt.innerText = '₱0.00';
+                if (_mc) _mc.innerHTML = emptyHTML; if (_mb) _mb.innerText = '0'; if (_mt) _mt.innerText = '₱0.00';
                 calculateChange(); return;
             }
 
@@ -357,36 +307,13 @@
                 const itemTotal = item.price * item.qty;
                 grandTotal += itemTotal; totalItems += item.qty;
                 const thumb = item.image || "https://placehold.co/50?text=?";
-                
-                const priceLine = `<small class="text-muted" style="font-size:.8rem;">₱${item.price.toFixed(2)} x ${item.qty}</small>`;
-
-                return `<div class="p-2 border-bottom bg-white mb-1">
-                    <div class="d-flex align-items-center">
-                        <img src="${thumb}" class="rounded me-2 shadow-sm" style="width:50px;height:50px;object-fit:cover;">
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <span class="fw-bold text-truncate" style="max-width:120px;" title="${item.name}">${item.name}</span>
-                                <span class="fw-bold text-danger">₱${itemTotal.toFixed(2)}</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center mt-1">
-                                ${priceLine}
-                                <div>
-                                    <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="adjustQty(${index},-1)">-</button>
-                                    <button class="btn btn-sm btn-outline-success py-0 px-2" onclick="adjustQty(${index},1)">+</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
+                return `<div class="p-2 border-bottom bg-white mb-1"><div class="d-flex align-items-center"><img src="${thumb}" class="rounded me-2 shadow-sm" style="width:50px;height:50px;object-fit:cover;"><div class="flex-grow-1"><div class="d-flex justify-content-between align-items-start"><span class="fw-bold text-truncate" style="max-width:120px;" title="${item.name}">${item.name}</span><span class="fw-bold text-danger">₱${itemTotal.toFixed(2)}</span></div><div class="d-flex justify-content-between align-items-center mt-1"><small class="text-muted" style="font-size:.8rem;">₱${item.price.toFixed(2)} x ${item.qty}</small><div><button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="adjustQty(${index},-1)">-</button><button class="btn btn-sm btn-outline-success py-0 px-2" onclick="adjustQty(${index},1)">+</button></div></div></div></div></div>`;
             });
 
-            const cartHTML = rows.join('');
-            container.innerHTML = cartHTML;
+            container.innerHTML = rows.join('');
             totalDisplay.innerText = "₱" + grandTotal.toFixed(2);
             countBadge.innerText = totalItems;
-            if (_mc) _mc.innerHTML = cartHTML;
-            if (_mb) _mb.innerText = totalItems;
-            if (_mt) _mt.innerText = totalDisplay.innerText;
+            if (_mc) _mc.innerHTML = rows.join(''); if (_mb) _mb.innerText = totalItems; if (_mt) _mt.innerText = totalDisplay.innerText;
             calculateChange();
         }
 
@@ -395,9 +322,7 @@
             if (change === 1) {
                 if (item.qty + 1 > item.stock) { alert("Max stock reached."); return; }
                 item.qty++;
-            } else {
-                item.qty--;
-            }
+            } else { item.qty--; }
             if (item.qty <= 0) cart.splice(index, 1);
             updateCartUI();
         };
@@ -405,8 +330,6 @@
         window.calculateChange = function() {
             const amountPaidInput = document.getElementById('amountPaidInput');
             const changeDisplay   = document.getElementById('changeDisplay');
-            const _mcd            = document.getElementById('mobileChangeDisplay');
-
             const total  = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
             const paid   = parseFloat(amountPaidInput.value) || 0;
             const change = paid - total;
@@ -415,31 +338,23 @@
             if (cart.length > 0 && paid > 0) {
                 text = change < 0 ? "Insufficient" : "₱" + change.toFixed(2);
                 cls  = `fw-bold fs-4 ${change < 0 ? 'text-danger' : 'text-success'}`;
-            } else {
-                text = "₱0.00"; cls = "fw-bold fs-4 text-muted";
-            }
+            } else { text = "₱0.00"; cls = "fw-bold fs-4 text-muted"; }
             changeDisplay.innerText = text; changeDisplay.className = cls;
+            
+            const _mcd = document.getElementById('mobileChangeDisplay');
             if (_mcd) { _mcd.innerText = text; _mcd.className = cls; }
         };
 
-        function sanitiseAmountField(input) {
-            let val = input.value.replace(/[^0-9.]/g, '');
+        document.getElementById('amountPaidInput').addEventListener('input', (e) => {
+            let val = e.target.value.replace(/[^0-9.]/g, '');
             const fd = val.indexOf('.');
             if (fd !== -1) val = val.slice(0, fd + 1) + val.slice(fd + 1).replace(/\./g, '');
-            if (input.value !== val) input.value = val;
-            return val;
-        }
-
-        document.getElementById('amountPaidInput').addEventListener('input', (e) => {
-            const val = sanitiseAmountField(e.target);
+            if (e.target.value !== val) e.target.value = val;
             const _ma = document.getElementById('mobileAmountPaid');
             if (_ma) _ma.value = val;
             calculateChange();
         });
 
-        // ══════════════════════════════════════════════════════
-        // 4. ACTION BUTTONS
-        // ══════════════════════════════════════════════════════
         window.clearCart = function() {
             if (confirm("Clear current order?")) {
                 cart = [];
@@ -451,13 +366,10 @@
         };
 
         window.checkStock = function() {
-            if (confirm("Go to Inventory? Current order will be lost."))
-                window.location.href = 'inventory.html?from=view';
+            if (confirm("Go to Inventory? Current order will be lost.")) window.location.href = 'inventory.html?from=view';
         };
 
-        window.scrollCategories = function(amount) {
-            document.getElementById('catScrollContainer').scrollLeft += amount;
-        };
+        window.scrollCategories = function(amount) { document.getElementById('catScrollContainer').scrollLeft += amount; };
 
         window.filterCategory = function(cat) {
             activeCategoryFilter = cat;
@@ -478,18 +390,49 @@
             if (!isHidden) {
                 document.getElementById('searchInput').value = '';
                 applyPosFilters();
-            } else {
-                document.getElementById('searchInput').focus();
+                document.getElementById('searchInput').focus(); // Ready for scanner!
             }
         };
 
         document.getElementById('btnCloseSearch').addEventListener('click', toggleSearch);
 
-        // ★ Smart search listener
-        document.getElementById('searchInput').addEventListener('input', applyPosFilters);
+        // ★ BARCODE SCANNER LOGIC (Listens for the Enter key)
+        const searchInput = document.getElementById('searchInput');
+        
+        searchInput.addEventListener('input', applyPosFilters); // Visual filter as you type
+        
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Stop normal Enter key behavior
+                const query = e.target.value.trim();
+                if (!query) return;
+
+                // 1. Check if the scanned number perfectly matches a saved barcode
+                const exactMatch = allProducts.find(p => p.barcode && p.barcode === query);
+                
+                if (exactMatch) {
+                    addToCart(exactMatch.id);
+                    e.target.value = ''; // Clear the box for the next scan
+                    applyPosFilters();   // Reset the visual grid
+                } else {
+                    // Fallback: If it's not a barcode, maybe they typed an OEM perfectly
+                    const fallbackMatch = allProducts.find(p => p.oem === query);
+                    if (fallbackMatch) {
+                        addToCart(fallbackMatch.id);
+                        e.target.value = '';
+                        applyPosFilters();
+                    } else {
+                        // Play a little visual error trick if item isn't found
+                        e.target.classList.add('is-invalid');
+                        setTimeout(() => e.target.classList.remove('is-invalid'), 1000);
+                        e.target.select(); 
+                    }
+                }
+            }
+        });
 
         // ══════════════════════════════════════════════════════
-        // 5. PAYMENT — records transaction
+        // 5. PAYMENT & RECEIPT PRINTING
         // ══════════════════════════════════════════════════════
         document.getElementById('btnPay').addEventListener('click', async () => {
             if (cart.length === 0) return alert("Cart is empty!");
@@ -501,14 +444,9 @@
             if (!rawPaid) { alert("Please enter the amount paid."); amountInput.focus(); return; }
             const paid = parseFloat(rawPaid);
             if (isNaN(paid) || paid <= 0) { alert("Enter a valid amount."); amountInput.focus(); return; }
-            if (paid < total) {
-                alert(`Insufficient payment.\n\nTotal Due: ₱${total.toFixed(2)}`);
-                amountInput.focus(); return;
-            }
+            if (paid < total) { alert(`Insufficient payment.\n\nTotal Due: ₱${total.toFixed(2)}`); amountInput.focus(); return; }
 
             const change = paid - total;
-            if (!confirm(`Confirm Payment\n\nTotal    : ₱${total.toFixed(2)}\nCash     : ₱${paid.toFixed(2)}\nChange   : ₱${change.toFixed(2)}`)) return;
-
             const btnPay = document.getElementById('btnPay');
             btnPay.innerText = "Processing…"; btnPay.disabled = true;
 
@@ -520,10 +458,8 @@
                     const productSnap = await getDoc(productRef);
                     if (!productSnap.exists()) continue;
 
-                    const productData   = productSnap.data();
-                    const currentStock  = productData.stock || 0;
+                    const currentStock  = productSnap.data().stock || 0;
                     const newStock      = Math.max(0, currentStock - cartItem.qty);
-
                     await updateDoc(productRef, { stock: newStock });
 
                     soldItemsLog.push({
@@ -537,15 +473,59 @@
                 }
 
                 await addDoc(collection(db, "sales"), {
-                    customer:     currentCustomer,
-                    items:        soldItemsLog,
+                    customer:   currentCustomer,
+                    items:      soldItemsLog,
                     total,
-                    amountPaid:   paid,
-                    change:       parseFloat(change.toFixed(2)),
-                    date:         new Date()
+                    amountPaid: paid,
+                    change:     parseFloat(change.toFixed(2)),
+                    date:       new Date()
                 });
 
-                alert("✅ Transaction Successful!");
+                // ── BUILD AND PRINT THE RECEIPT ──
+                let receiptHTML = `
+                    <div style="text-align: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0; font-weight: bold; font-family: sans-serif;">CAR-XPERT</h3>
+                        <p style="margin: 0; font-size: 12px;">Truck Parts & Surplus</p>
+                        <p style="margin: 0; font-size: 12px;">${new Date().toLocaleString()}</p>
+                        <hr style="border-top: 1px dashed black; margin: 8px 0;">
+                    </div>
+                    <table style="width: 100%; font-size: 12px; margin-bottom: 10px;">
+                        <tr><th style="text-align: left;">Item</th><th style="text-align: right;">Total</th></tr>
+                `;
+
+                soldItemsLog.forEach(item => {
+                    receiptHTML += `
+                        <tr>
+                            <td style="padding-bottom: 4px;">${item.qty}x ${item.name}</td>
+                            <td style="text-align: right; padding-bottom: 4px;">${item.lineTotal.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+
+                receiptHTML += `
+                    </table>
+                    <hr style="border-top: 1px dashed black; margin: 8px 0;">
+                    <div style="font-size: 14px; text-align: right;">
+                        <p style="margin: 2px 0;"><strong>TOTAL: ₱${total.toFixed(2)}</strong></p>
+                        <p style="margin: 2px 0;">CASH: ₱${paid.toFixed(2)}</p>
+                        <p style="margin: 2px 0;">CHANGE: ₱${change.toFixed(2)}</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px; font-size: 12px;">
+                        <p style="margin: 0;">Thank you, Boss!</p>
+                        <p style="margin: 0;">Please inspect parts before leaving.</p>
+                        <br><br>
+                    </div>
+                `;
+
+                const printDiv = document.getElementById('printReceipt');
+                printDiv.innerHTML = receiptHTML;
+                printDiv.classList.remove('d-none'); // Show for printing
+                
+                window.print(); // Trigger thermal printer / browser dialog
+
+                printDiv.classList.add('d-none'); // Hide immediately after
+                // ─────────────────────────────────
+
                 cart = [];
                 amountInput.value = "";
                 const _ma2 = document.getElementById('mobileAmountPaid');
@@ -565,21 +545,22 @@
         // ══════════════════════════════════════════════════════
         function handleExit() {
             if (cart.length > 0) {
-                if (confirm("Return to Home? Current order will be discarded."))
-                    window.location.href = 'home.html';
-            } else {
-                window.location.href = 'home.html';
-            }
+                if (confirm("Return to Home? Current order will be discarded.")) window.location.href = 'home.html';
+            } else { window.location.href = 'home.html'; }
         }
 
         document.getElementById('btnBack').addEventListener('click', e => { e.preventDefault(); handleExit(); });
 
         document.addEventListener('keydown', e => {
             if (e.key === "Escape") handleExit();
+            
+            // Allow global Enter to trigger payment ONLY IF search bar is not being used
             if (e.key === "Enter" && window.innerWidth >= 768) {
-                if (document.activeElement?.id === 'searchInput') return;
-                e.preventDefault();
-                document.getElementById('btnPay').click();
+                if (document.activeElement?.id === 'searchInput') return; // Let scanner use Enter!
+                if (document.activeElement?.id === 'amountPaidInput') {
+                    e.preventDefault();
+                    document.getElementById('btnPay').click();
+                }
             }
         });
 
@@ -594,7 +575,6 @@
             </div>
         </div>
         <div id="mobileOrderBody" class="sismo-slide-panel-body" style="display:flex;flex-direction:column;">
-
             <div id="mobileCartContainer" style="flex:1 1 auto;overflow-y:auto;min-height:0;">
                 <div class="text-center text-muted p-4">
                     <i class="bi bi-basket display-4"></i>
@@ -653,13 +633,12 @@
         });
 
         document.getElementById('mobileBtnPay').addEventListener('click', () => {
-            document.getElementById('amountPaidInput').value =
-                document.getElementById('mobileAmountPaid').value;
+            document.getElementById('amountPaidInput').value = document.getElementById('mobileAmountPaid').value;
             document.getElementById('btnPay').click();
         });
 
         renderMobileBottomNav([
-            { icon:'bi-search',   label:'Search', id:'mnavSearch', onclick:'toggleSearch()' },
+            { icon:'bi-upc-scan', label:'Scan', id:'mnavSearch', onclick:'toggleSearch()' },
             { icon:'bi-x-circle', label:'Clear',  id:'mnavClear',  onclick:'clearCart()' },
             { icon:'bi-box-seam', label:'Stock',  id:'mnavStock',  onclick:'checkStock()' }
         ]);
@@ -668,22 +647,14 @@
         window.addEventListener('resize',syncPaletteView);
     </script>
 
-    <button id="palette-btn" class="btn btn-dark shadow"
-            onclick="document.getElementById('bgPicker').click()"
-            style="position:fixed;bottom:30px;right:30px;width:50px;height:50px;border-radius:50%;z-index:9999;"
-            title="Change Background">
-        <i class="bi bi-palette-fill"></i>
-    </button>
+    <button id="palette-btn" class="btn btn-dark shadow" onclick="document.getElementById('bgPicker').click()" style="position:fixed;bottom:30px;right:30px;width:50px;height:50px;border-radius:50%;z-index:9999;" title="Change Background"><i class="bi bi-palette-fill"></i></button>
     <input type="color" id="bgPicker" style="visibility:hidden;position:fixed;bottom:30px;right:30px;">
 
     <script>
         const picker = document.getElementById('bgPicker');
         const savedColor = localStorage.getItem('carxpert_bg_color');
         if (savedColor) { applyBgColor(savedColor); picker.value = savedColor; }
-        picker.addEventListener('input', e => {
-            applyBgColor(e.target.value);
-            localStorage.setItem('carxpert_bg_color', e.target.value);
-        });
+        picker.addEventListener('input', e => { applyBgColor(e.target.value); localStorage.setItem('carxpert_bg_color', e.target.value); });
     </script>
 </body>
 </html>
